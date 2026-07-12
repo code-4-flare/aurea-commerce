@@ -2,7 +2,7 @@
 
 Fashion ecommerce storefront built with Next.js App Router and a standalone Sanity Studio.
 
-This repository is structured as a public monorepo: the storefront and Studio live side by side, while private content and secrets stay outside Git.
+This repository is structured as a public monorepo: the storefront and Studio live side by side.
 
 ## Tech Stack
 
