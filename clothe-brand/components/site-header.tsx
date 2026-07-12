@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -35,8 +36,8 @@ export default function SiteHeader({ currentPath, settings }: { currentPath: str
           </nav>
 
           <div className="flex flex-1 justify-center md:flex-initial">
-            <Link href="/" className="font-serif text-3xl font-medium uppercase tracking-[0.2em] text-brand-dark transition-opacity hover:opacity-80">
-              {settings.brandName}
+            <Link href="/" className="flex items-center transition-opacity hover:opacity-80" aria-label={`${settings.brandName} home`}>
+              <Image src="/aurea-logo.svg" alt={settings.brandName} width={168} height={38} priority className="h-10 w-auto" />
             </Link>
           </div>
 
@@ -61,7 +62,7 @@ export default function SiteHeader({ currentPath, settings }: { currentPath: str
           <button className="fixed inset-0 bg-brand-dark/40 backdrop-blur-sm" aria-label="Close menu" onClick={() => setIsMobileMenuOpen(false)} />
           <div className="relative z-10 flex w-full max-w-xs flex-col bg-brand-cream p-8 shadow-2xl">
             <div className="mb-12 flex items-center justify-between">
-              <span className="font-serif text-xl uppercase tracking-widest">{settings.brandName}</span>
+              <Image src="/aurea-logo.svg" alt={settings.brandName} width={146} height={34} className="h-9 w-auto" />
               <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">
                 <X />
               </Button>
