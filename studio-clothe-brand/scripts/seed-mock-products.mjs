@@ -10,9 +10,14 @@ const studioRoot = path.resolve(__dirname, "..");
 const appRoot = path.resolve(studioRoot, "../clothe-brand");
 const imageDir = path.join(appRoot, "images");
 
-const projectId = process.env.SANITY_PROJECT_ID || "18w15i18";
-const dataset = process.env.SANITY_DATASET || "production";
+const projectId = process.env.SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID;
+const dataset = process.env.SANITY_DATASET || process.env.SANITY_STUDIO_DATASET || "production";
 const token = process.env.SANITY_AUTH_TOKEN;
+
+if (!projectId) {
+  console.error("Missing SANITY_PROJECT_ID. Add it to your environment and rerun this script.");
+  process.exit(1);
+}
 
 if (!token) {
   console.error("Missing SANITY_AUTH_TOKEN. Create a Sanity token with write access and rerun this script.");
