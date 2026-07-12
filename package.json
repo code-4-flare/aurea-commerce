@@ -1,0 +1,14 @@
+{
+  "name": "clothe-brand-project",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:store": "npm --prefix clothe-brand run dev",
+    "dev:studio": "npm --prefix studio-clothe-brand run dev",
+    "build:store": "npm --prefix clothe-brand run build",
+    "build:studio": "npm --prefix studio-clothe-brand run build",
+    "lint:store": "npm --prefix clothe-brand run lint",
+    "schema:deploy": "npm --prefix studio-clothe-brand run schema:deploy",
+    "seed:mock": "npm --prefix studio-clothe-brand run seed:mock"
+  }
+}

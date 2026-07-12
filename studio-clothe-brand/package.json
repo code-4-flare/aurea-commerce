@@ -1,0 +1,21 @@
+{
+  "name": "studio-clothe-brand",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity start",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "schema:deploy": "sanity schema deploy",
+    "seed:mock": "node scripts/seed-mock-products.mjs"
+  },
+  "dependencies": {
+    "@sanity/vision": "^4.10.0",
+    "sanity": "^4.10.0",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
