@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import SiteShell from "@/components/site-shell";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/src/sanity/lib/queries";
@@ -28,6 +30,8 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SiteShell settings={settings}>{children}</SiteShell>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
