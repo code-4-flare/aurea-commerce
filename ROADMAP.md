@@ -6,7 +6,7 @@
 - Sanity Studio is standalone.
 - Products, categories, collections, colors, sizes, homepage, site settings, delivery policy, and lookbook content can be edited in Sanity.
 - Cart is frontend-only with Zustand.
-- Checkout is UI-only.
+- Checkout validates customer and delivery details and initializes Paystack payments.
 
 ## Phase 1: Content Polish
 
@@ -26,11 +26,17 @@
 
 ## Phase 3: Paystack Payments
 
-- Add Paystack checkout initialization endpoint.
-- Store Paystack public key in frontend env and secret key in server env only.
-- Add payment verification route.
-- Add success and failure checkout states.
-- Decide where confirmed order records live before storing production orders.
+- [x] Add Paystack checkout initialization endpoint.
+- [x] Keep the Paystack secret key in the server environment only.
+- [x] Add server-side payment verification.
+- [x] Add branded success, processing, and failure checkout states.
+- [ ] Add a tasteful, reduced-motion-aware confetti celebration after a payment is successfully verified.
+- [ ] Add an order database before production fulfillment:
+  - Create a pending order before Paystack initialization and generate its unique payment reference.
+  - Store customer, delivery, expected KES amount, and immutable line-item snapshots.
+  - On callback or `charge.success`, atomically verify reference, currency, amount, and status before marking the order paid.
+  - Record processed webhook events and status transitions so retries cannot fulfill an order twice.
+  - Trigger fulfillment and customer notifications only after the paid transition succeeds.
 
 ## Phase 4: WhatsApp Integration With Kapso
 
