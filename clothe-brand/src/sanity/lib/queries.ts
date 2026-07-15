@@ -82,6 +82,16 @@ export const PRODUCT_BY_SLUG_QUERY = defineQuery(/* groq */ `
   }
 `);
 
+export const CHECKOUT_PRODUCTS_QUERY = defineQuery(/* groq */ `
+  *[_type == "product" && (!defined(status) || status == "active") && slug.current in $productIds] {
+    "id": slug.current,
+    title,
+    price,
+    "colors": colors[]->name,
+    "sizes": sizes[]->label
+  }
+`);
+
 export const NEW_ARRIVALS_QUERY = defineQuery(/* groq */ `
   *[_type == "product" && (!defined(status) || status == "active") && isNewArrival == true && defined(slug.current)]
   | order(publishedAt desc, _createdAt desc)[0...12] {
