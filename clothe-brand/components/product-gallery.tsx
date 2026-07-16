@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 
-import { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 export default function ProductGallery({ product }: { product: Product }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);

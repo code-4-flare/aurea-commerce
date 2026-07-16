@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Privacy Policy | Aurea Nairobi",
-  description: "Default privacy policy for the Aurea Nairobi fashion store.",
-};
+  description: "Learn how Aurea Nairobi collects, uses, shares, and protects customer, order, payment-status, and website analytics information.",
+  path: "/privacy-policy",
+});
 
 const sections = [
   {
@@ -55,7 +57,7 @@ export default function PrivacyPolicyPage() {
       <h1 className="mt-3 font-serif text-5xl font-normal tracking-tight text-brand-dark">Privacy Policy</h1>
       <p className="mt-4 text-xs font-light uppercase tracking-wider text-stone-500">Last updated: July 12, 2026</p>
       <p className="mt-8 max-w-3xl text-sm font-light leading-relaxed text-stone-600">
-        This default policy explains how Aurea Nairobi may collect, use, and protect customer information. It is a general template and should be reviewed for your actual business practices before launch.
+        This policy explains how Aurea Nairobi collects, uses, shares, and protects customer information when you browse or place an order.
       </p>
 
       <div className="mt-10 divide-y divide-brand-dark/10 rounded-2xl border border-brand-dark/5 bg-white">

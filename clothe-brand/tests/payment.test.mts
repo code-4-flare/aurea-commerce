@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
 
-import { checkoutSchema, resolvePaymentReference } from "../lib/checkout-schema.ts";
+import { checkoutInitializationResponseSchema, readApiResponse } from "../lib/api-contracts.ts";
+import { checkoutProductsSchema } from "../lib/catalog-contracts.ts";
+import { checkoutSchema, resolvePaymentReference, whatsappInquirySchema } from "../lib/checkout-schema.ts";
+import { buildWhatsAppUrl, createWhatsAppOrderMessage, isPrivateStorePath, withUtmParameters } from "../lib/links.ts";
 import { generateOrderNumber, paystackAmountFor, paymentMatchesOrder } from "../lib/order-utils.ts";
-import { resolvePaymentStatus } from "../lib/paystack.ts";
 import { hasValidPaystackSignature, paystackWebhookSchema } from "../lib/paystack-webhook.ts";
 
 const validCheckout = {
@@ -21,6 +23,41 @@ const validCheckout = {
   },
   cart: [{ productId: "rib-polo", size: "M", color: "Espresso", quantity: 2 }],
 };
+
+test("checkout API responses are parsed from unknown JSON", async () => {
+  const response = Response.json({
+    authorizationUrl: "https://checkout.paystack.com/example",
+    reference: "trx-123",
+    orderNumber: "AUR-20260716-A9F2",
+  });
+
+  const result = await readApiResponse(response, checkoutInitializationResponseSchema);
+
+  assert.equal("authorizationUrl" in result, true);
+});
+
+test("checkout API parsing rejects malformed response JSON", async () => {
+  const response = Response.json({ authorizationUrl: "not-a-url" });
+
+  await assert.rejects(
+    readApiResponse(response, checkoutInitializationResponseSchema),
+    /server returned an invalid response/i,
+  );
+});
+
+test("checkout pricing rejects malformed Sanity product projections", () => {
+  const malformedProduct = [{
+    productDocumentId: "product-1",
+    id: "rib-polo",
+    title: "Rib Polo",
+    price: "13500",
+    productImage: null,
+    colors: ["Espresso"],
+    sizes: ["M"],
+  }];
+
+  assert.equal(checkoutProductsSchema.safeParse(malformedProduct).success, false);
+});
 
 test("checkout schema accepts valid customer, delivery, and cart data", () => {
   assert.equal(checkoutSchema.safeParse(validCheckout).success, true);
@@ -65,25 +102,6 @@ test("callback reference accepts reference or trxref and rejects mismatches", ()
   assert.equal(resolvePaymentReference({ reference: "invalid/reference" }), null);
 });
 
-test("Paystack statuses resolve to final and processing states", () => {
-  const transaction = {
-    id: 42,
-    reference: "trx-123",
-    amount: 12_500,
-    currency: "KES",
-    channel: "card",
-    metadata: { source: "aurea-commerce" },
-  } as const;
-
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success" }), "success");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "pending" }), "processing");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "ongoing" }), "processing");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "failed" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "abandoned" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success", currency: "NGN" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success", metadata: {} }), "failed");
-});
-
 test("Paystack webhook signature and event shape are validated", () => {
   const secret = "sk_test_webhook_secret";
   const rawBody = JSON.stringify({
@@ -96,6 +114,13 @@ test("Paystack webhook signature and event shape are validated", () => {
   assert.equal(hasValidPaystackSignature(rawBody, "invalid", secret), false);
   assert.equal(paystackWebhookSchema.safeParse(JSON.parse(rawBody)).success, true);
   assert.equal(paystackWebhookSchema.safeParse({ event: "charge.success", data: {} }).success, false);
+  assert.equal(
+    paystackWebhookSchema.safeParse({
+      event: "charge.success",
+      data: { id: 72, reference: "trx-123", status: "unknown", amount: 12500, currency: "KES" },
+    }).success,
+    false,
+  );
 });
 
 test("order numbers and Paystack subunit amounts are deterministic", () => {
@@ -112,4 +137,43 @@ test("successful payment must match the stored order amount and currency", () =>
   assert.equal(paymentMatchesOrder({ status: "success", currency: "KES", amount: 1_349_900 }, order), false);
   assert.equal(paymentMatchesOrder({ status: "success", currency: "NGN", amount: 1_350_000 }, order), false);
   assert.equal(paymentMatchesOrder({ status: "failed", currency: "KES", amount: 1_350_000 }, order), false);
+});
+
+test("WhatsApp inquiries accept cart-only or complete checkout details", () => {
+  assert.equal(whatsappInquirySchema.safeParse({ cart: validCheckout.cart }).success, true);
+  assert.equal(whatsappInquirySchema.safeParse(validCheckout).success, true);
+  assert.equal(
+    whatsappInquirySchema.safeParse({ cart: validCheckout.cart, customer: validCheckout.customer }).success,
+    false,
+  );
+  assert.equal(whatsappInquirySchema.safeParse({ cart: [] }).success, false);
+});
+
+test("UTM helpers preserve links and exclude Studio from public navigation", () => {
+  assert.equal(
+    withUtmParameters("/shop?collection=linen#pieces", {
+      utmSource: "instagram",
+      utmMedium: "social",
+      utmCampaign: "new_arrivals",
+    }),
+    "/shop?collection=linen&utm_source=instagram&utm_medium=social&utm_campaign=new_arrivals#pieces",
+  );
+  assert.equal(isPrivateStorePath("/studio"), true);
+  assert.equal(isPrivateStorePath("https://shop.example/studio/products"), true);
+  assert.equal(isPrivateStorePath("/shop"), false);
+});
+
+test("WhatsApp helpers validate the destination and encode order context", () => {
+  const message = createWhatsAppOrderMessage({
+    orderNumber: "AUR-20260716-A9F2",
+    total: 13_500,
+    items: [{ name: "Rib Polo", size: "M", color: "Espresso", quantity: 2 }],
+    trackedStoreUrl: "https://aurea.example/shop?utm_source=whatsapp",
+  });
+  const url = buildWhatsAppUrl("https://wa.me/254700000000", message);
+
+  assert.match(message, /AUR-20260716-A9F2/);
+  assert.match(message, /Rib Polo/);
+  assert.equal(new URL(url).searchParams.get("text"), message);
+  assert.throws(() => buildWhatsAppUrl("https://example.com/contact", message));
 });

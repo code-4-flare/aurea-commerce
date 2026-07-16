@@ -1,14 +1,15 @@
 import "server-only";
 
 import { PaystackError, verifyPaystackTransactionWithPayload } from "@/lib/paystack";
+import type { PaystackWebhookEvent } from "@/lib/paystack-webhook";
 import {
   findOrderByReference,
-  type PaymentResult,
   reconcileOrderPayment,
   recordPaymentEvent,
 } from "@/src/lib/orders/server";
+import type { PaymentVerificationResult } from "@/types/payment";
 
-export async function verifyAndReconcilePayment(reference: string): Promise<PaymentResult> {
+export async function verifyAndReconcilePayment(reference: string): Promise<PaymentVerificationResult> {
   const order = await findOrderByReference(reference);
 
   try {
@@ -26,8 +27,7 @@ export async function verifyAndReconcilePayment(reference: string): Promise<Paym
 
     if (!order) {
       return {
-        success: false,
-        paymentStatus: "failed",
+        status: "failed",
         message: "No order was found for this payment reference.",
       };
     }
@@ -47,10 +47,7 @@ export async function verifyAndReconcilePayment(reference: string): Promise<Paym
   }
 }
 
-export async function reconcilePaystackWebhook(rawPayload: unknown, event: {
-  event: string;
-  data: { reference: string; status: string; amount: number; currency: string };
-}) {
+export async function reconcilePaystackWebhook(rawPayload: unknown, event: PaystackWebhookEvent) {
   const order = await findOrderByReference(event.data.reference);
 
   await recordPaymentEvent({

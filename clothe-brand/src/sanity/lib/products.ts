@@ -1,4 +1,4 @@
-import type { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 type SanityImageAsset = {
   url?: string;
@@ -37,6 +37,10 @@ export type SanityProduct = {
   }[];
 };
 
+export type SanityProductDocument = SanityProduct & {
+  relatedProducts?: SanityProduct[];
+};
+
 export type SanityCollectionCard = {
   _id?: string;
   title?: string;
@@ -47,7 +51,7 @@ export type SanityCollectionCard = {
   };
 };
 
-const fallbackImage = "/window.svg";
+const fallbackImage = "/aurea-mark.svg";
 
 export function mapSanityProduct(product: SanityProduct): Product {
   const images = product.images?.map(item => item.image?.asset?.url).filter((url): url is string => Boolean(url)) ?? [];

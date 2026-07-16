@@ -5,8 +5,14 @@ import { formatKES } from "@/lib/utils";
 import { findOrderByReference } from "@/src/lib/orders/server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: "Payment Verified | Aurea Nairobi" };
+export const metadata: Metadata = createPageMetadata({
+  title: "Payment Verified | Aurea Nairobi",
+  description: "Your Aurea Nairobi payment and order have been confirmed.",
+  path: "/payments/success",
+  noIndex: true,
+});
 export const dynamic = "force-dynamic";
 
 export default async function PaymentSuccessPage({
@@ -28,7 +34,7 @@ export default async function PaymentSuccessPage({
     redirect(`/payments/failed?reference=${encodeURIComponent(reference)}&reason=verification_failed`);
   }
   if (!order) redirect(`/payments/failed?reference=${encodeURIComponent(reference)}&reason=verification_failed`);
-  if (order.payment_status !== "paid") redirect(`/payment/callback?reference=${encodeURIComponent(reference)}`);
+  if (order.payment_status !== "paid") redirect(`/payments/callback?reference=${encodeURIComponent(reference)}`);
 
   return (
     <>

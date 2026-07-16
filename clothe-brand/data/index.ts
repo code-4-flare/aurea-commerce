@@ -1,4 +1,4 @@
-import { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: "sig-bomber",

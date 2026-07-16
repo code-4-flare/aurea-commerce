@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatKES } from "@/lib/utils";
 import { useCommerceStore } from "@/store/use-commerce-store";
-import { ColorSwatch, Product } from "@/utils/types";
+import type { ColorSwatch, Product } from "@/types/commerce";
 
 export default function ProductCard({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState<ColorSwatch>(product.colors[0]);

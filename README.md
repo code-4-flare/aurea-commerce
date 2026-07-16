@@ -44,13 +44,13 @@ Sanity is used as the content and catalog backend only.
 
 Sanity is not used for transactional commerce data.
 
-- No orders
-- No payments
-- No customers
+- Orders and immutable line-item snapshots are stored in Supabase.
+- Payment events are processed through Paystack and audited in Supabase.
+- Customer checkout details are stored with the transactional order, not in Sanity.
 - No authentication
 - No backend cart
 
-Cart state currently lives in Zustand on the frontend. Checkout is UI-only for now.
+Cart state lives in Zustand on the frontend. Checkout validates and reprices the cart server-side before creating a pending Supabase order and initializing Paystack.
 
 ## Local Setup
 
@@ -115,6 +115,14 @@ npx sanity login
 npm run schema:deploy
 ```
 
+For production database migrations and a full hosted Studio deployment, follow
+[`docs/deployment.md`](./docs/deployment.md). The root-level Studio deployment
+command is:
+
+```bash
+npm run deploy:studio
+```
+
 ## Seed Sample Content
 
 Create a Sanity token with write access, then run:
@@ -174,7 +182,7 @@ Editors can update the following in Sanity:
 - Header brand label and navigation
 - Mobile menu links and contact content
 - Trust strip items
-- Footer manifesto, feature cards, gallery, newsletter copy, link columns, studio contact, and legal links
+- Footer manifesto, feature cards, gallery, social links, link columns, studio contact, and legal links
 - Delivery and returns policy
 
 ## Validation
@@ -223,3 +231,14 @@ Never commit:
 ## Roadmap
 
 See [ROADMAP.md](./ROADMAP.md).
+
+## Agent workflow
+
+Repository instructions and durable planning artifacts live in [`AGENTS.md`](./AGENTS.md) and [`docs/`](./docs/). Use the included workflow helper from the repository root:
+
+```bash
+./agent-workflow.sh status
+./agent-workflow.sh work-item <slug> "<title>"
+./agent-workflow.sh prompt implement docs/work-items/WI-001-<slug>.md
+./agent-workflow.sh handoff <slug>
+```

@@ -1,15 +1,16 @@
 "use client";
 
-import { Lock, Minus, Percent, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { Loader2, Lock, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/utils";
+import { readApiResponse, whatsappInquiryResponseSchema } from "@/lib/api-contracts";
 import { useCommerceStore } from "@/store/use-commerce-store";
 
 const FREE_DELIVERY_THRESHOLD = 15000;
@@ -21,26 +22,13 @@ export default function CartDrawer() {
   const cartItems = useCommerceStore(state => state.cartItems);
   const updateCartQuantity = useCommerceStore(state => state.updateCartQuantity);
   const removeCartItem = useCommerceStore(state => state.removeCartItem);
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedDiscount, setAppliedDiscount] = useState(0);
-  const [promoMessage, setPromoMessage] = useState("");
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
+  const whatsappRequestInFlight = useRef(false);
 
   const subtotal = useMemo(() => cartItems.reduce((total, item) => total + item.product.price * item.quantity, 0), [cartItems]);
-  const discountAmount = (subtotal * appliedDiscount) / 100;
   const deliveryFee = subtotal === 0 || subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 500;
-  const total = subtotal - discountAmount + deliveryFee;
+  const total = subtotal + deliveryFee;
   const deliveryProgressPercent = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
-
-  const handlePromo = (event: FormEvent) => {
-    event.preventDefault();
-    if (promoCode.trim().toUpperCase() === "AUREA10") {
-      setAppliedDiscount(10);
-      setPromoMessage("AUREA10 applied: 10% discount subtracted.");
-    } else {
-      setAppliedDiscount(0);
-      setPromoMessage(promoCode.trim() ? "Invalid promotional code." : "Please type a code.");
-    }
-  };
 
   const goToCheckout = () => {
     closeCart();
@@ -50,6 +38,43 @@ export default function CartDrawer() {
   const goToShop = () => {
     closeCart();
     router.push("/shop");
+  };
+
+  const openWhatsAppInquiry = async () => {
+    if (whatsappRequestInFlight.current) return;
+    whatsappRequestInFlight.current = true;
+    const popup = window.open("about:blank", "_blank");
+    if (popup) popup.opener = null;
+    setIsOpeningWhatsApp(true);
+
+    try {
+      const response = await fetch("/api/checkout/whatsapp-inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cart: cartItems.map(item => ({
+            productId: item.product.id,
+            size: item.selectedSize,
+            color: item.selectedColor.name,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+      const data = await readApiResponse(response, whatsappInquiryResponseSchema);
+      if (!response.ok || "message" in data) {
+        throw new Error("message" in data ? data.message : "Unable to prepare WhatsApp.");
+      }
+
+      if (popup) popup.location.assign(data.whatsappUrl);
+      else window.location.assign(data.whatsappUrl);
+      closeCart();
+    } catch (error) {
+      popup?.close();
+      toast.error(error instanceof Error ? error.message : "Unable to prepare your WhatsApp order.");
+    } finally {
+      whatsappRequestInFlight.current = false;
+      setIsOpeningWhatsApp(false);
+    }
   };
 
   return (
@@ -116,18 +141,6 @@ export default function CartDrawer() {
                     </div>
                   ))}
                 </div>
-
-                <form onSubmit={handlePromo} className="flex flex-col gap-2 pt-4">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-dark">Promotional Code</label>
-                  <div className="flex gap-2">
-                    <div className="relative flex flex-grow items-center">
-                      <Input value={promoCode} onChange={event => setPromoCode(event.target.value)} placeholder="Type AUREA10 for 10% off" className="uppercase tracking-wider" />
-                      {appliedDiscount > 0 && <Percent className="absolute right-3 h-4 w-4 text-emerald-600" />}
-                    </div>
-                    <Button type="submit" size="sm" className="rounded-xl px-5">Apply</Button>
-                  </div>
-                  {promoMessage && <p className={`text-[11px] ${appliedDiscount > 0 ? "font-semibold text-emerald-600" : "font-light text-rose-600"}`}>{promoMessage}</p>}
-                </form>
               </div>
             ) : (
               <div className="flex h-[60vh] flex-col items-center justify-center px-4 text-center">
@@ -145,13 +158,16 @@ export default function CartDrawer() {
             <div className="flex flex-col gap-4 border-t border-brand-dark/10 bg-white p-6">
               <div className="flex flex-col gap-2.5 text-xs">
                 <div className="flex justify-between text-stone-500"><span>Subtotal</span><span className="font-medium text-brand-dark">{formatKES(subtotal)}</span></div>
-                {appliedDiscount > 0 && <div className="flex justify-between rounded-lg bg-emerald-50 p-2 font-medium text-emerald-700"><span>Coupon (10%)</span><span>-{formatKES(discountAmount)}</span></div>}
                 <div className="flex justify-between text-stone-500"><span>Standard Shipping</span><span className="font-medium text-brand-dark">{deliveryFee === 0 ? "Complimentary" : formatKES(deliveryFee)}</span></div>
                 <Separator />
                 <div className="flex justify-between text-sm font-semibold text-brand-dark"><span>Order Total</span><span>{formatKES(total)}</span></div>
               </div>
               <Button onClick={goToCheckout} className="w-full">
                 <Lock data-icon="inline-start" /> Checkout Securely
+              </Button>
+              <Button type="button" variant="outline" onClick={openWhatsAppInquiry} disabled={isOpeningWhatsApp} className="w-full">
+                {isOpeningWhatsApp ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <MessageCircle data-icon="inline-start" aria-hidden="true" />}
+                {isOpeningWhatsApp ? "Preparing WhatsApp..." : "Order via WhatsApp"}
               </Button>
               <div className="flex items-center justify-center gap-4 pt-2 text-[9px] font-light uppercase tracking-wider text-stone-400">
                 <span>Secure Payments</span><span>14-Day Returns</span><span>Fast Courier</span>

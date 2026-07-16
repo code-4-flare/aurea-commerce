@@ -1,9 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 import TrustStrip from "@/components/trust-strip";
-import { Button } from "@/components/ui/button";
+import SmartLink from "@/components/smart-link";
 import { HomepageContent, SiteSettingsContent } from "@/src/sanity/lib/site";
 
 export default function Hero({ content, siteSettings }: { content: HomepageContent; siteSettings: SiteSettingsContent }) {
@@ -22,14 +21,12 @@ export default function Hero({ content, siteSettings }: { content: HomepageConte
             </div>
             <p className="max-w-md text-sm font-light leading-relaxed text-stone-600 sm:text-base">{content.heroText}</p>
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-              <Button className="group px-8 py-5">
-                <Link href={content.primaryCtaHref} className="inline-flex items-center gap-2">
-                  {content.primaryCtaLabel} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-              <Button variant="outline" className="px-8 py-5">
-                <Link href={content.secondaryCtaHref}>{content.secondaryCtaLabel}</Link>
-              </Button>
+              <SmartLink href={content.primaryCtaHref} className="group inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark px-8 py-5 text-xs font-semibold uppercase tracking-widest text-brand-cream shadow-md transition-all hover:bg-brand-gold hover:text-brand-dark">
+                {content.primaryCtaLabel} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </SmartLink>
+              <SmartLink href={content.secondaryCtaHref} className="inline-flex items-center justify-center rounded-full border border-brand-dark/20 px-8 py-5 text-xs font-semibold uppercase tracking-widest text-brand-dark transition-all hover:border-brand-dark hover:bg-white">
+                {content.secondaryCtaLabel}
+              </SmartLink>
             </div>
           </div>
           <div className="mt-16 grid grid-cols-3 gap-6 border-t border-brand-dark/10 pt-8 lg:mt-24">
@@ -55,9 +52,9 @@ export default function Hero({ content, siteSettings }: { content: HomepageConte
           <div className="absolute bottom-8 right-8 hidden max-w-[240px] rounded-xl border border-white/40 bg-brand-cream/90 p-5 shadow-lg backdrop-blur-md sm:block">
             <span className="mb-1 block text-[9px] font-bold uppercase tracking-[0.25em] text-brand-gold">{content.seasonalFocusEyebrow}</span>
             <span className="mb-2 block font-serif text-sm italic leading-tight tracking-wide text-brand-dark">&ldquo;{content.seasonalFocusText}&rdquo;</span>
-            <Link href={content.seasonalFocusLinkHref} className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-brand-dark transition-colors hover:text-brand-gold">
+            <SmartLink href={content.seasonalFocusLinkHref} className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-brand-dark transition-colors hover:text-brand-gold">
               {content.seasonalFocusLinkLabel} <ArrowRight className="h-3 w-3" />
-            </Link>
+            </SmartLink>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ import ProductGrid from "@/components/product-grid";
 import { Button } from "@/components/ui/button";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { ColorSwatch, FilterState, Product } from "@/utils/types";
+import type { ColorSwatch, FilterState, Product } from "@/types/commerce";
 
 const initialFilters: FilterState = {
   category: [],

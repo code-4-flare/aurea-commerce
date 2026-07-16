@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ColorSwatch, FilterState } from "@/utils/types";
+import type { ColorSwatch, FilterState } from "@/types/commerce";
 
 type FilterSidebarProps = {
   filters: FilterState;

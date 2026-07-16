@@ -3,7 +3,7 @@ import Link from "next/link";
 import ProductGallery from "@/components/product-gallery";
 import ProductGrid from "@/components/product-grid";
 import ProductOptions from "@/components/product-options";
-import { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 export default function ProductPageClient({ product, relatedProducts }: { product: Product; relatedProducts: Product[] }) {
   return (
@@ -26,4 +26,3 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
     </div>
   );
 }
-

@@ -1,18 +1,30 @@
 import { resolvePaymentReference } from "@/lib/checkout-schema";
 import { verifyAndReconcilePayment } from "@/src/lib/payments/server";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 type PaymentCallbackProps = {
   searchParams: Promise<{ reference?: string | string[]; trxref?: string | string[] }>;
 };
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = createPageMetadata({
+  title: "Confirming Payment | Aurea Nairobi",
+  description: "Aurea Nairobi is securely confirming your Paystack transaction.",
+  path: "/payments/callback",
+  noIndex: true,
+});
 
 function resultUrl(path: "success" | "processing" | "failed", reference?: string, reason?: string) {
   const params = new URLSearchParams();
   if (reference) params.set("reference", reference);
   if (reason) params.set("reason", reason);
   return `/payments/${path}?${params.toString()}`;
+}
+
+function unreachablePaymentResult(value: never): never {
+  throw new Error(`Unsupported payment result: ${JSON.stringify(value)}`);
 }
 
 export default async function PaymentCallbackPage({ searchParams }: PaymentCallbackProps) {
@@ -31,7 +43,14 @@ export default async function PaymentCallbackPage({ searchParams }: PaymentCallb
     redirect(resultUrl("failed", reference, "verification_failed"));
   }
 
-  if (result.success) redirect(resultUrl("success", reference));
-  if (result.paymentStatus === "pending") redirect(resultUrl("processing", reference));
-  redirect(resultUrl("failed", reference, "payment_failed"));
+  switch (result.status) {
+    case "paid":
+      redirect(resultUrl("success", reference));
+    case "pending":
+      redirect(resultUrl("processing", reference));
+    case "failed":
+      redirect(resultUrl("failed", reference, "payment_failed"));
+    default:
+      return unreachablePaymentResult(result);
+  }
 }

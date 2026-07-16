@@ -1,16 +1,7 @@
-import type { CheckoutPayload } from "@/lib/checkout-schema";
+import type { CheckoutPayload } from "@/types/checkout";
+import { checkoutProductsSchema } from "@/lib/catalog-contracts";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { CHECKOUT_PRODUCTS_QUERY } from "@/src/sanity/lib/queries";
-
-type CheckoutProduct = {
-  productDocumentId: string;
-  id: string;
-  title: string;
-  price: number;
-  productImage: string | null;
-  colors: string[] | null;
-  sizes: string[] | null;
-};
 
 export type CheckoutQuote = {
   subtotal: number;
@@ -34,11 +25,11 @@ export function calculateDeliveryFee(subtotal: number) {
 
 export async function createCheckoutQuote(cart: CheckoutPayload["cart"]): Promise<CheckoutQuote> {
   const productIds = [...new Set(cart.map(item => item.productId))];
-  const products = (await sanityFetch({
+  const products = checkoutProductsSchema.parse(await sanityFetch({
     query: CHECKOUT_PRODUCTS_QUERY,
     params: { productIds },
     revalidate: false,
-  })) as CheckoutProduct[];
+  }));
   const productsById = new Map(products.map(product => [product.id, product]));
 
   const items = cart.map(item => {

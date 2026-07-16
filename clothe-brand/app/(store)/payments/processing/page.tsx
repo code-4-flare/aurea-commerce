@@ -2,8 +2,14 @@ import PaymentResultShell from "@/components/payment-result-shell";
 import { resolvePaymentReference } from "@/lib/checkout-schema";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: "Payment Processing | Aurea Nairobi" };
+export const metadata: Metadata = createPageMetadata({
+  title: "Payment Processing | Aurea Nairobi",
+  description: "Your Aurea Nairobi payment is still being confirmed by Paystack.",
+  path: "/payments/processing",
+  noIndex: true,
+});
 export const dynamic = "force-dynamic";
 
 export default async function PaymentProcessingPage({

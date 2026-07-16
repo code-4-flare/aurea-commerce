@@ -1,5 +1,5 @@
 import ProductCard from "@/components/product-card";
-import { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 export default function ProductGrid({ products }: { products: Product[] }) {
   return (

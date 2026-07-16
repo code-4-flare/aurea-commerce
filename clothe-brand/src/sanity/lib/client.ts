@@ -21,18 +21,18 @@ export const client = createClient({
   useCdn: false,
 });
 
-export async function sanityFetch<const QueryString extends string>({
+export async function sanityFetch<Result = unknown>({
   query,
   params = {},
   revalidate = 30,
   tags = [],
 }: {
-  query: QueryString;
+  query: string;
   params?: QueryParams;
   revalidate?: number | false;
   tags?: string[];
-}) {
-  return client.fetch(query, params, {
+}): Promise<Result> {
+  return client.fetch<Result>(query, params, {
     next: {
       revalidate: tags.length ? false : revalidate,
       tags,
