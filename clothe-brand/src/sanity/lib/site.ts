@@ -88,7 +88,7 @@ type RawLink = {
   href?: string;
 };
 
-type RawSiteSettings = {
+export type RawSiteSettings = {
   title?: string;
   brandName?: string;
   description?: string;
@@ -117,7 +117,7 @@ type RawSiteSettings = {
   legalLinks?: RawLink[];
 };
 
-type RawHomepage = {
+export type RawHomepage = {
   heroEyebrow?: string;
   heroTitle?: string;
   heroAccent?: string;

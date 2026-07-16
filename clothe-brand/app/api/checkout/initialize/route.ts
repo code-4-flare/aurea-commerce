@@ -1,4 +1,5 @@
 import { checkoutSchema, zodFieldErrors } from "@/lib/checkout-schema";
+import type { CheckoutInitializationResponse } from "@/lib/api-contracts";
 import { CheckoutPricingError, createCheckoutQuote } from "@/lib/checkout-pricing";
 import { paystackAmountFor } from "@/lib/order-utils";
 import { initializePaystackTransaction, PaystackError } from "@/lib/paystack";
@@ -7,8 +8,8 @@ import {
   createPendingOrder,
   markOrderInitializationFailed,
   OrderPersistenceError,
-  type OrderRecord,
 } from "@/src/lib/orders/server";
+import type { PaymentOrder } from "@/types/orders";
 import { NextResponse } from "next/server";
 
 function callbackUrl(request: Request) {
@@ -17,8 +18,8 @@ function callbackUrl(request: Request) {
   return new URL("/payments/callback", baseUrl.origin).toString();
 }
 
-export async function POST(request: Request) {
-  let pendingOrder: OrderRecord | undefined;
+export async function POST(request: Request): Promise<NextResponse<CheckoutInitializationResponse>> {
+  let pendingOrder: PaymentOrder | undefined;
 
   try {
     const body: unknown = await request.json();

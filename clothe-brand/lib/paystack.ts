@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { paystackTransactionStatuses } from "../types/payment.ts";
+
 const paystackInitializeSchema = z.object({
   status: z.literal(true),
   message: z.string(),
@@ -12,7 +14,7 @@ const paystackInitializeSchema = z.object({
   }),
 });
 
-const transactionStatusSchema = z.enum(["abandoned", "failed", "ongoing", "pending", "processing", "queued", "reversed", "success"]);
+const transactionStatusSchema = z.enum(paystackTransactionStatuses);
 
 const paystackVerificationSchema = z.object({
   status: z.literal(true),
@@ -47,7 +49,7 @@ function secretKey() {
   return value;
 }
 
-async function readJson(response: Response) {
+async function readJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {

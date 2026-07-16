@@ -11,6 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { checkoutCounties, checkoutSchema, zodFieldErrors } from "@/lib/checkout-schema";
+import {
+  checkoutInitializationResponseSchema,
+  readApiResponse,
+  whatsappInquiryResponseSchema,
+} from "@/lib/api-contracts";
 import { formatKES } from "@/lib/utils";
 import { useCommerceStore } from "@/store/use-commerce-store";
 
@@ -22,11 +27,6 @@ type CheckoutForm = {
   townArea: string;
   streetLandmark: string;
   deliveryNotes: string;
-};
-
-type CheckoutErrorResponse = {
-  message?: string;
-  fieldErrors?: Record<string, string>;
 };
 
 const initialForm: CheckoutForm = {
@@ -116,12 +116,13 @@ export default function CheckoutClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await response.json()) as CheckoutErrorResponse & { authorizationUrl?: string };
+      const data = await readApiResponse(response, checkoutInitializationResponseSchema);
 
-      if (!response.ok || !data.authorizationUrl) {
+      if ("message" in data) {
         if (data.fieldErrors) setFieldErrors(data.fieldErrors);
-        throw new Error(data.message || "Unable to start checkout.");
+        throw new Error(data.message);
       }
+      if (!response.ok) throw new Error("Unable to start checkout.");
 
       window.location.assign(data.authorizationUrl);
     } catch (error) {
@@ -148,12 +149,13 @@ export default function CheckoutClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await response.json()) as CheckoutErrorResponse & { whatsappUrl?: string };
+      const data = await readApiResponse(response, whatsappInquiryResponseSchema);
 
-      if (!response.ok || !data.whatsappUrl) {
+      if ("message" in data) {
         if (data.fieldErrors) setFieldErrors(data.fieldErrors);
-        throw new Error(data.message || "Unable to prepare WhatsApp.");
+        throw new Error(data.message);
       }
+      if (!response.ok) throw new Error("Unable to prepare WhatsApp.");
 
       if (popup) popup.location.assign(data.whatsappUrl);
       else window.location.assign(data.whatsappUrl);

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
 
+import { checkoutInitializationResponseSchema, readApiResponse } from "../lib/api-contracts.ts";
+import { checkoutProductsSchema } from "../lib/catalog-contracts.ts";
 import { checkoutSchema, resolvePaymentReference, whatsappInquirySchema } from "../lib/checkout-schema.ts";
 import { buildWhatsAppUrl, createWhatsAppOrderMessage, isPrivateStorePath, withUtmParameters } from "../lib/links.ts";
 import { generateOrderNumber, paystackAmountFor, paymentMatchesOrder } from "../lib/order-utils.ts";
@@ -21,6 +23,41 @@ const validCheckout = {
   },
   cart: [{ productId: "rib-polo", size: "M", color: "Espresso", quantity: 2 }],
 };
+
+test("checkout API responses are parsed from unknown JSON", async () => {
+  const response = Response.json({
+    authorizationUrl: "https://checkout.paystack.com/example",
+    reference: "trx-123",
+    orderNumber: "AUR-20260716-A9F2",
+  });
+
+  const result = await readApiResponse(response, checkoutInitializationResponseSchema);
+
+  assert.equal("authorizationUrl" in result, true);
+});
+
+test("checkout API parsing rejects malformed response JSON", async () => {
+  const response = Response.json({ authorizationUrl: "not-a-url" });
+
+  await assert.rejects(
+    readApiResponse(response, checkoutInitializationResponseSchema),
+    /server returned an invalid response/i,
+  );
+});
+
+test("checkout pricing rejects malformed Sanity product projections", () => {
+  const malformedProduct = [{
+    productDocumentId: "product-1",
+    id: "rib-polo",
+    title: "Rib Polo",
+    price: "13500",
+    productImage: null,
+    colors: ["Espresso"],
+    sizes: ["M"],
+  }];
+
+  assert.equal(checkoutProductsSchema.safeParse(malformedProduct).success, false);
+});
 
 test("checkout schema accepts valid customer, delivery, and cart data", () => {
   assert.equal(checkoutSchema.safeParse(validCheckout).success, true);
@@ -77,6 +114,13 @@ test("Paystack webhook signature and event shape are validated", () => {
   assert.equal(hasValidPaystackSignature(rawBody, "invalid", secret), false);
   assert.equal(paystackWebhookSchema.safeParse(JSON.parse(rawBody)).success, true);
   assert.equal(paystackWebhookSchema.safeParse({ event: "charge.success", data: {} }).success, false);
+  assert.equal(
+    paystackWebhookSchema.safeParse({
+      event: "charge.success",
+      data: { id: 72, reference: "trx-123", status: "unknown", amount: 12500, currency: "KES" },
+    }).success,
+    false,
+  );
 });
 
 test("order numbers and Paystack subunit amounts are deterministic", () => {

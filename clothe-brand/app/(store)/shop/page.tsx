@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import ShopClient from "@/components/shop-client";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { ALL_ACTIVE_PRODUCTS_QUERY } from "@/src/sanity/lib/queries";
-import { mapSanityProducts } from "@/src/sanity/lib/products";
+import { mapSanityProducts, type SanityProduct } from "@/src/sanity/lib/products";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata({
@@ -14,7 +14,9 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function ShopPage() {
-  const products = mapSanityProducts(await sanityFetch({ query: ALL_ACTIVE_PRODUCTS_QUERY, tags: ["product"] }));
+  const products = mapSanityProducts(
+    await sanityFetch<SanityProduct[]>({ query: ALL_ACTIVE_PRODUCTS_QUERY, tags: ["product"] }),
+  );
 
   return (
     <Suspense>

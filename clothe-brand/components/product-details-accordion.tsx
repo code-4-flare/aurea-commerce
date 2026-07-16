@@ -1,5 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 export default function ProductDetailsAccordion({ product }: { product: Product }) {
   return (

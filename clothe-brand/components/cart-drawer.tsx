@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/utils";
+import { readApiResponse, whatsappInquiryResponseSchema } from "@/lib/api-contracts";
 import { useCommerceStore } from "@/store/use-commerce-store";
 
 const FREE_DELIVERY_THRESHOLD = 15000;
@@ -59,8 +60,10 @@ export default function CartDrawer() {
           })),
         }),
       });
-      const data = (await response.json()) as { message?: string; whatsappUrl?: string };
-      if (!response.ok || !data.whatsappUrl) throw new Error(data.message || "Unable to prepare WhatsApp.");
+      const data = await readApiResponse(response, whatsappInquiryResponseSchema);
+      if (!response.ok || "message" in data) {
+        throw new Error("message" in data ? data.message : "Unable to prepare WhatsApp.");
+      }
 
       if (popup) popup.location.assign(data.whatsappUrl);
       else window.location.assign(data.whatsappUrl);

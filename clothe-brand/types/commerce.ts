@@ -1,15 +1,17 @@
-export interface ColorSwatch {
-  name: string;
-  value: string; // Hex value for color swatch
-}
+export type ProductBadge = "New In" | "Best Seller" | "Limited Edition" | "Editorial Pick";
 
-export interface Product {
+export type ColorSwatch = {
+  name: string;
+  value: string;
+};
+
+export type Product = {
   id: string;
   name: string;
   category: string;
-  price: number; // In KES
-  badge?: "New In" | "Best Seller" | "Limited Edition" | "Editorial Pick";
-  images: string[]; // Array of image URLs
+  price: number;
+  badge?: ProductBadge;
+  images: string[];
   colors: ColorSwatch[];
   sizes: string[];
   rating: number;
@@ -18,20 +20,20 @@ export interface Product {
   details: string[];
   care: string[];
   inStock: boolean;
-}
+};
 
-export interface CartItem {
-  id: string; // Unique instance ID in cart (product.id + color + size)
+export type CartItem = {
+  id: string;
   product: Product;
   selectedColor: ColorSwatch;
   selectedSize: string;
   quantity: number;
-}
+};
 
-export interface FilterState {
+export type FilterState = {
   category: string[];
   color: string[];
   size: string[];
   priceRange: [number, number];
   availability: "all" | "inStock" | "outOfStock";
-}
+};

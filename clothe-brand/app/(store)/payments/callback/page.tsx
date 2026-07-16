@@ -23,6 +23,10 @@ function resultUrl(path: "success" | "processing" | "failed", reference?: string
   return `/payments/${path}?${params.toString()}`;
 }
 
+function unreachablePaymentResult(value: never): never {
+  throw new Error(`Unsupported payment result: ${JSON.stringify(value)}`);
+}
+
 export default async function PaymentCallbackPage({ searchParams }: PaymentCallbackProps) {
   const reference = resolvePaymentReference(await searchParams);
 
@@ -39,7 +43,14 @@ export default async function PaymentCallbackPage({ searchParams }: PaymentCallb
     redirect(resultUrl("failed", reference, "verification_failed"));
   }
 
-  if (result.success) redirect(resultUrl("success", reference));
-  if (result.paymentStatus === "pending") redirect(resultUrl("processing", reference));
-  redirect(resultUrl("failed", reference, "payment_failed"));
+  switch (result.status) {
+    case "paid":
+      redirect(resultUrl("success", reference));
+    case "pending":
+      redirect(resultUrl("processing", reference));
+    case "failed":
+      redirect(resultUrl("failed", reference, "payment_failed"));
+    default:
+      return unreachablePaymentResult(result);
+  }
 }

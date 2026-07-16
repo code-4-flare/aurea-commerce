@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = publicRoutes.map(path => ({ url: absoluteSiteUrl(path) }));
 
   try {
-    const products = (await sanityFetch({ query: PRODUCT_SITEMAP_QUERY, tags: ["product"] })) as SitemapProduct[];
+    const products = await sanityFetch<SitemapProduct[]>({ query: PRODUCT_SITEMAP_QUERY, tags: ["product"] });
     const productEntries: MetadataRoute.Sitemap = products
       .filter(product => product.slug)
       .map(product => ({

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/utils";
 import { useCommerceStore } from "@/store/use-commerce-store";
-import { ColorSwatch, Product } from "@/utils/types";
+import type { ColorSwatch, Product } from "@/types/commerce";
 
 export default function ProductOptions({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState<ColorSwatch>(product.colors[0]);

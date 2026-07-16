@@ -17,7 +17,9 @@ Last updated: 2026-07-16
 - Public navigation filters Studio links, external links share safe new-tab behavior, configured social channels render in the footer, and attribution names Code4Flare.
 - Cart and checkout can persist a server-priced `whatsapp_inquiry` with immutable item snapshots before opening a prefilled WhatsApp conversation.
 - Storefront empty/error/not-found states cover cart, checkout, payment callback/results, route errors, and unavailable products.
-- Production-readiness verification passed 11 focused tests, TypeScript, ESLint, storefront build, Studio build, generated metadata inspection, and isolated PostgreSQL migration/access checks.
+- Production-readiness verification passed focused tests, TypeScript, ESLint, storefront build, Studio build, generated metadata inspection, and isolated PostgreSQL migration/access checks.
+- Strict TypeScript contracts now centralize Product, Cart Item, Checkout Payload, Order, Order Item, and Payment Verification Result; checkout/API JSON and trusted Sanity pricing data are runtime-validated without unsafe assertions.
+- Payment reconciliation exposes an exhaustive `paid | pending | failed` result while preserving existing amount, currency, provider-status, and idempotency rules.
 
 ## In progress
 

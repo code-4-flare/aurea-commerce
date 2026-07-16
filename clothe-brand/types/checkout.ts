@@ -1,1 +1,1 @@
-export type { CheckoutPayload } from "@/lib/checkout-schema";
+export type { CheckoutPayload, WhatsAppInquiryPayload } from "@/lib/checkout-schema";

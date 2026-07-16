@@ -1,14 +1,15 @@
 import { whatsappInquirySchema, zodFieldErrors } from "@/lib/checkout-schema";
+import type { WhatsAppInquiryResponse } from "@/lib/api-contracts";
 import { CheckoutPricingError, createCheckoutQuote } from "@/lib/checkout-pricing";
 import { buildWhatsAppUrl, createWhatsAppOrderMessage, withUtmParameters } from "@/lib/links";
 import { absoluteSiteUrl } from "@/lib/site-url";
 import { createWhatsAppInquiry, OrderPersistenceError } from "@/src/lib/orders/server";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/src/sanity/lib/queries";
-import { mapSiteSettings } from "@/src/sanity/lib/site";
+import { mapSiteSettings, type RawSiteSettings } from "@/src/sanity/lib/site";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse<WhatsAppInquiryResponse>> {
   try {
     const body: unknown = await request.json();
     const parsed = whatsappInquirySchema.safeParse(body);
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
 
     const [quote, siteSettingsDocument] = await Promise.all([
       createCheckoutQuote(parsed.data.cart),
-      sanityFetch({ query: SITE_SETTINGS_QUERY, tags: ["siteSettings"] }),
+      sanityFetch<RawSiteSettings | null>({ query: SITE_SETTINGS_QUERY, tags: ["siteSettings"] }),
     ]);
     const settings = mapSiteSettings(siteSettingsDocument);
     const validatedWhatsAppUrl = buildWhatsAppUrl(settings.studioWhatsappUrl, "");

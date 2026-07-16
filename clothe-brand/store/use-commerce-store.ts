@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 
-import { CartItem, ColorSwatch, Product } from "@/utils/types";
+import type { CartItem, ColorSwatch, Product } from "@/types/commerce";
 
 type CommerceStore = {
   cartItems: CartItem[];

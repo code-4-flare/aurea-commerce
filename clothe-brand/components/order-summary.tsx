@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/utils";
-import { CartItem } from "@/utils/types";
+import type { CartItem } from "@/types/commerce";
 
 export default function OrderSummary({ cartItems }: { cartItems: CartItem[] }) {
   const subtotal = cartItems.reduce((total, item) => total + item.product.price * item.quantity, 0);

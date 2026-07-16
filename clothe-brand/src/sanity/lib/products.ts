@@ -1,4 +1,4 @@
-import type { Product } from "@/utils/types";
+import type { Product } from "@/types/commerce";
 
 type SanityImageAsset = {
   url?: string;
@@ -35,6 +35,10 @@ export type SanityProduct = {
     label?: string;
     sortOrder?: number;
   }[];
+};
+
+export type SanityProductDocument = SanityProduct & {
+  relatedProducts?: SanityProduct[];
 };
 
 export type SanityCollectionCard = {

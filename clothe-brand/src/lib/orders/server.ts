@@ -1,28 +1,11 @@
 import "server-only";
 
 import type { CheckoutQuote } from "@/lib/checkout-pricing";
-import type { CheckoutPayload, WhatsAppInquiryPayload } from "@/lib/checkout-schema";
+import type { CheckoutPayload, WhatsAppInquiryPayload } from "@/types/checkout";
 import { generateOrderNumber, paymentMatchesOrder } from "@/lib/order-utils";
 import { getSupabaseAdmin } from "@/src/lib/supabase/server";
-
-export type OrderRecord = {
-  id: string;
-  order_number: string;
-  total: number;
-  currency: string;
-  status: string;
-  payment_status: string;
-  paystack_reference: string | null;
-  paid_at: string | null;
-};
-
-export type PaymentResult = {
-  success: boolean;
-  orderNumber?: string;
-  orderId?: string;
-  paymentStatus: string;
-  message: string;
-};
+import type { OrderInsert, OrderItemInsert, PaymentOrder } from "@/types/orders";
+import type { PaymentTransaction, PaymentVerificationResult } from "@/types/payment";
 
 export class OrderPersistenceError extends Error {}
 
@@ -30,7 +13,7 @@ function safeDatabaseError(operation: string, error: { code?: string; message: s
   console.error(`Supabase ${operation} failed`, { code: error.code, message: error.message });
 }
 
-function orderItems(orderId: string, quote: CheckoutQuote) {
+function orderItems(orderId: string, quote: CheckoutQuote): OrderItemInsert[] {
   return quote.items.map(item => ({
     order_id: orderId,
     product_id: item.productDocumentId,
@@ -45,13 +28,13 @@ function orderItems(orderId: string, quote: CheckoutQuote) {
   }));
 }
 
-async function insertOrderWithItems(values: Record<string, unknown>, quote: CheckoutQuote) {
+async function insertOrderWithItems(values: OrderInsert, quote: CheckoutQuote) {
   const supabase = getSupabaseAdmin();
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert(values)
     .select("id, order_number, total, currency, status, payment_status, paystack_reference, paid_at")
-    .single<OrderRecord>();
+    .single<PaymentOrder>();
 
   if (orderError || !order) {
     if (orderError) safeDatabaseError("order creation", orderError);
@@ -142,7 +125,7 @@ export async function findOrderByReference(reference: string) {
     .from("orders")
     .select("id, order_number, total, currency, status, payment_status, paystack_reference, paid_at")
     .eq("paystack_reference", reference)
-    .maybeSingle<OrderRecord>();
+    .maybeSingle<PaymentOrder>();
 
   if (error) {
     safeDatabaseError("order lookup", error);
@@ -177,9 +160,9 @@ export async function recordPaymentEvent(input: {
 }
 
 export async function reconcileOrderPayment(
-  order: OrderRecord,
-  transaction: { status: string; currency: string; amount: number },
-): Promise<PaymentResult> {
+  order: PaymentOrder,
+  transaction: PaymentTransaction,
+): Promise<PaymentVerificationResult> {
   if (!paymentMatchesOrder(transaction, order)) {
     const isFinalFailure = ["abandoned", "failed", "reversed"].includes(transaction.status);
     const isMismatch = transaction.status === "success";
@@ -198,10 +181,9 @@ export async function reconcileOrderPayment(
     }
 
     return {
-      success: false,
+      status: isFinalFailure || isMismatch ? "failed" : "pending",
       orderNumber: order.order_number,
       orderId: order.id,
-      paymentStatus: isFinalFailure || isMismatch ? "failed" : "pending",
       message: isMismatch
         ? "The payment amount or currency did not match the order."
         : "The payment has not been confirmed as successful.",
@@ -237,10 +219,9 @@ export async function reconcileOrderPayment(
   }
 
   return {
-    success: true,
+    status: "paid",
     orderNumber: order.order_number,
     orderId: order.id,
-    paymentStatus: "paid",
     message: "Payment verified successfully.",
   };
 }

@@ -9,7 +9,7 @@ import SmartLink from "@/components/smart-link";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { ALL_ACTIVE_PRODUCTS_QUERY, HOMEPAGE_QUERY, SITE_SETTINGS_QUERY } from "@/src/sanity/lib/queries";
 import { mapSanityCollection, mapSanityProducts, type SanityCollectionCard, type SanityProduct } from "@/src/sanity/lib/products";
-import { mapHomepage, mapSiteSettings } from "@/src/sanity/lib/site";
+import { mapHomepage, mapSiteSettings, type RawHomepage, type RawSiteSettings } from "@/src/sanity/lib/site";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata({
@@ -18,36 +18,16 @@ export const metadata: Metadata = createPageMetadata({
   path: "/",
 });
 
-type HomepageDocument = {
-  heroEyebrow?: string;
-  heroTitle?: string;
-  heroAccent?: string;
-  heroText?: string;
-  heroImage?: { asset?: { url?: string } };
-  primaryCtaLabel?: string;
-  primaryCtaHref?: string;
-  secondaryCtaLabel?: string;
-  secondaryCtaHref?: string;
-  heroStats?: { label?: string }[];
-  seasonalFocusEyebrow?: string;
-  seasonalFocusText?: string;
-  seasonalFocusLinkLabel?: string;
-  seasonalFocusLinkHref?: string;
-  featuredProductsEyebrow?: string;
-  featuredProductsTitle?: string;
-  featuredProductsLinkLabel?: string;
-  featuredProductsLinkHref?: string;
+type HomepageDocument = (RawHomepage & {
   featuredProducts?: SanityProduct[];
   featuredCollections?: SanityCollectionCard[];
-  featuredCollectionsEyebrow?: string;
-  featuredCollectionsTitle?: string;
-} | null;
+}) | null;
 
 export default async function HomePage() {
   const [homepageDocument, activeProducts, siteSettingsDocument] = await Promise.all([
-    sanityFetch({ query: HOMEPAGE_QUERY, tags: ["homepage", "product", "collection"] }) as Promise<HomepageDocument>,
-    sanityFetch({ query: ALL_ACTIVE_PRODUCTS_QUERY, tags: ["product"] }),
-    sanityFetch({ query: SITE_SETTINGS_QUERY, tags: ["siteSettings"] }),
+    sanityFetch<HomepageDocument>({ query: HOMEPAGE_QUERY, tags: ["homepage", "product", "collection"] }),
+    sanityFetch<SanityProduct[]>({ query: ALL_ACTIVE_PRODUCTS_QUERY, tags: ["product"] }),
+    sanityFetch<RawSiteSettings | null>({ query: SITE_SETTINGS_QUERY, tags: ["siteSettings"] }),
   ]);
   const homepage = mapHomepage(homepageDocument);
   const siteSettings = mapSiteSettings(siteSettingsDocument);

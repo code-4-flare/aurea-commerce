@@ -1,8 +1,9 @@
 import { hasValidPaystackSignature, paystackWebhookSchema } from "@/lib/paystack-webhook";
+import type { ApiErrorResponse, WebhookSuccessResponse } from "@/lib/api-contracts";
 import { reconcilePaystackWebhook } from "@/src/lib/payments/server";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse<ApiErrorResponse | WebhookSuccessResponse>> {
   const secret = process.env.PAYSTACK_SECRET_KEY;
   const signature = request.headers.get("x-paystack-signature");
 
