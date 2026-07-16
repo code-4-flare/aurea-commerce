@@ -44,13 +44,13 @@ Sanity is used as the content and catalog backend only.
 
 Sanity is not used for transactional commerce data.
 
-- No orders
-- No payments
-- No customers
+- Orders and immutable line-item snapshots are stored in Supabase.
+- Payment events are processed through Paystack and audited in Supabase.
+- Customer checkout details are stored with the transactional order, not in Sanity.
 - No authentication
 - No backend cart
 
-Cart state currently lives in Zustand on the frontend. Checkout is UI-only for now.
+Cart state lives in Zustand on the frontend. Checkout validates and reprices the cart server-side before creating a pending Supabase order and initializing Paystack.
 
 ## Local Setup
 
@@ -223,3 +223,14 @@ Never commit:
 ## Roadmap
 
 See [ROADMAP.md](./ROADMAP.md).
+
+## Agent workflow
+
+Repository instructions and durable planning artifacts live in [`AGENTS.md`](./AGENTS.md) and [`docs/`](./docs/). Use the included workflow helper from the repository root:
+
+```bash
+./agent-workflow.sh status
+./agent-workflow.sh work-item <slug> "<title>"
+./agent-workflow.sh prompt implement docs/work-items/WI-001-<slug>.md
+./agent-workflow.sh handoff <slug>
+```
