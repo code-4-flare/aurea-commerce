@@ -1,8 +1,8 @@
 import ClearCartOnPayment from "@/components/clear-cart-on-payment";
 import PaymentResultShell from "@/components/payment-result-shell";
 import { resolvePaymentReference } from "@/lib/checkout-schema";
-import { resolvePaymentStatus, verifyPaystackTransaction } from "@/lib/paystack";
 import { formatKES } from "@/lib/utils";
+import { findOrderByReference } from "@/src/lib/orders/server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -17,17 +17,18 @@ export default async function PaymentSuccessPage({
   const reference = resolvePaymentReference(await searchParams);
   if (!reference) redirect("/payments/failed?reason=missing_reference");
 
-  let transaction;
+  let order: Awaited<ReturnType<typeof findOrderByReference>>;
   try {
-    transaction = await verifyPaystackTransaction(reference);
+    order = await findOrderByReference(reference);
   } catch (error) {
-    console.error("Payment success verification error:", error);
+    console.error("Paid order lookup failed", {
+      reference,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
     redirect(`/payments/failed?reference=${encodeURIComponent(reference)}&reason=verification_failed`);
   }
-
-  const resolution = resolvePaymentStatus(transaction);
-  if (resolution === "processing") redirect(`/payments/processing?reference=${encodeURIComponent(reference)}`);
-  if (resolution === "failed") redirect(`/payments/failed?reference=${encodeURIComponent(reference)}&reason=payment_failed`);
+  if (!order) redirect(`/payments/failed?reference=${encodeURIComponent(reference)}&reason=verification_failed`);
+  if (order.payment_status !== "paid") redirect(`/payment/callback?reference=${encodeURIComponent(reference)}`);
 
   return (
     <>
@@ -36,11 +37,12 @@ export default async function PaymentSuccessPage({
         tone="success"
         eyebrow="Transaction complete"
         title="Your payment is confirmed."
-        description="Paystack has verified the transaction. Keep the reference below with your payment receipt in case you need help from the Aurea customer experience team."
-        reference={transaction.reference}
+        description="Your payment and order have been recorded. Keep the order number below in case you need help from the Aurea customer experience team."
+        reference={reference}
         details={[
-          { label: "Amount", value: formatKES(transaction.amount / 100) },
-          { label: "Channel", value: transaction.channel ? transaction.channel.replaceAll("_", " ") : "Paystack" },
+          { label: "Order number", value: order.order_number },
+          { label: "Payment status", value: "Paid" },
+          { label: "Amount", value: formatKES(order.total) },
         ]}
         primaryAction={{ href: "/shop", label: "Continue shopping" }}
         secondaryAction={{ href: "/contact", label: "Contact Aurea" }}

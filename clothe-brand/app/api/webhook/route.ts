@@ -1,4 +1,5 @@
 import { hasValidPaystackSignature, paystackWebhookSchema } from "@/lib/paystack-webhook";
+import { reconcilePaystackWebhook } from "@/src/lib/payments/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -6,7 +7,7 @@ export async function POST(request: Request) {
   const signature = request.headers.get("x-paystack-signature");
 
   if (!secret) {
-    console.error("Paystack webhook received without PAYSTACK_SECRET_KEY configured.");
+    console.error("Paystack webhook rejected: secret key is not configured");
     return NextResponse.json({ message: "Payment service is not configured." }, { status: 503 });
   }
   if (!signature) {
@@ -30,15 +31,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Invalid event payload." }, { status: 400 });
   }
 
-  if (
-    event.data.event === "charge.success" &&
-    event.data.data.status === "success" &&
-    event.data.data.currency === "KES"
-  ) {
-    // TODO(database): Find the pending order by reference, compare its expected
-    // amount and KES currency, then atomically mark it paid. Store processed
-    // event IDs/references so Paystack retries cannot fulfill an order twice.
-    console.info("Verified Paystack charge event received:", event.data.data.reference);
+  try {
+    await reconcilePaystackWebhook(body, event.data);
+  } catch (error) {
+    console.error("Paystack webhook persistence failed", {
+      reference: event.data.data.reference,
+      event: event.data.event,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ message: "Webhook could not be persisted." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

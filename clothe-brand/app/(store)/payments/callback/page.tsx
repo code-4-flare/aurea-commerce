@@ -1,5 +1,5 @@
 import { resolvePaymentReference } from "@/lib/checkout-schema";
-import { resolvePaymentStatus, verifyPaystackTransaction } from "@/lib/paystack";
+import { verifyAndReconcilePayment } from "@/src/lib/payments/server";
 import { redirect } from "next/navigation";
 
 type PaymentCallbackProps = {
@@ -20,16 +20,18 @@ export default async function PaymentCallbackPage({ searchParams }: PaymentCallb
 
   if (!reference) redirect(resultUrl("failed", undefined, "missing_reference"));
 
-  let resolution;
+  let result;
   try {
-    const transaction = await verifyPaystackTransaction(reference);
-    resolution = resolvePaymentStatus(transaction);
+    result = await verifyAndReconcilePayment(reference);
   } catch (error) {
-    console.error("Payment callback verification error:", error);
+    console.error("Payment callback reconciliation failed", {
+      reference,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
     redirect(resultUrl("failed", reference, "verification_failed"));
   }
 
-  if (resolution === "success") redirect(resultUrl("success", reference));
-  if (resolution === "processing") redirect(resultUrl("processing", reference));
+  if (result.success) redirect(resultUrl("success", reference));
+  if (result.paymentStatus === "pending") redirect(resultUrl("processing", reference));
   redirect(resultUrl("failed", reference, "payment_failed"));
 }

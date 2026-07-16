@@ -10,9 +10,24 @@ See the root [README.md](../README.md) for full setup, Sanity, seeding, and road
 npm run dev
 ```
 
+## Supabase order setup
+
+1. Create a Supabase project and run [`supabase/migrations/202607150001_create_orders.sql`](supabase/migrations/202607150001_create_orders.sql) in the Supabase SQL editor.
+2. Add these values to `.env.local` and to the deployment environment:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+The Supabase URL is not secret, but `SUPABASE_SERVICE_ROLE_KEY` is imported only by server modules and must never be exposed to client components. The migration enables Row Level Security and grants only the table operations required by the server-side checkout flow to `service_role`.
+
+The checkout API creates a pending order and immutable item snapshots before opening Paystack. Configure Paystack to send webhooks to `/api/webhooks/paystack` (the existing `/api/webhook` URL remains compatible). Both the callback verifier and signed webhook validate the stored KES amount before marking an order paid.
+
 ## Validation
 
 ```bash
+npm test
 npm run lint
 npm run build
 ```

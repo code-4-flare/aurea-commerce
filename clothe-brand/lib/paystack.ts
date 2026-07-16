@@ -33,7 +33,14 @@ const paystackErrorSchema = z.object({ message: z.string().optional() }).loose()
 export type PaystackVerification = z.infer<typeof paystackVerificationSchema>["data"];
 export type PaymentResolution = "success" | "processing" | "failed";
 
-export class PaystackError extends Error {}
+export class PaystackError extends Error {
+  readonly payload?: unknown;
+
+  constructor(message: string, payload?: unknown) {
+    super(message);
+    this.payload = payload;
+  }
+}
 
 function secretKey() {
   const value = process.env.PAYSTACK_SECRET_KEY;
@@ -53,6 +60,7 @@ export async function initializePaystackTransaction(input: {
   email: string;
   amount: number;
   callbackUrl: string;
+  reference?: string;
   metadata: Record<string, unknown>;
 }) {
   const response = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -66,6 +74,7 @@ export async function initializePaystackTransaction(input: {
       amount: input.amount,
       currency: "KES",
       callback_url: input.callbackUrl,
+      reference: input.reference,
       metadata: input.metadata,
     }),
   });
@@ -74,13 +83,21 @@ export async function initializePaystackTransaction(input: {
 
   if (!response.ok || !parsed.success) {
     const providerError = paystackErrorSchema.safeParse(body);
-    throw new PaystackError(providerError.success && providerError.data.message ? providerError.data.message : "Unable to initialize payment.");
+    throw new PaystackError(
+      providerError.success && providerError.data.message ? providerError.data.message : "Unable to initialize payment.",
+      body,
+    );
   }
 
   return parsed.data.data;
 }
 
 export async function verifyPaystackTransaction(reference: string): Promise<PaystackVerification> {
+  const result = await verifyPaystackTransactionWithPayload(reference);
+  return result.transaction;
+}
+
+export async function verifyPaystackTransactionWithPayload(reference: string) {
   const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
     headers: { Authorization: `Bearer ${secretKey()}` },
     cache: "no-store",
@@ -90,10 +107,13 @@ export async function verifyPaystackTransaction(reference: string): Promise<Pays
 
   if (!response.ok || !parsed.success) {
     const providerError = paystackErrorSchema.safeParse(body);
-    throw new PaystackError(providerError.success && providerError.data.message ? providerError.data.message : "Unable to verify payment.");
+    throw new PaystackError(
+      providerError.success && providerError.data.message ? providerError.data.message : "Unable to verify payment.",
+      body,
+    );
   }
 
-  return parsed.data.data;
+  return { transaction: parsed.data.data, rawPayload: body };
 }
 
 export function resolvePaymentStatus(transaction: PaystackVerification): PaymentResolution {

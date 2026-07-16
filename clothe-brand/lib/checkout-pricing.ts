@@ -3,9 +3,11 @@ import { sanityFetch } from "@/src/sanity/lib/client";
 import { CHECKOUT_PRODUCTS_QUERY } from "@/src/sanity/lib/queries";
 
 type CheckoutProduct = {
+  productDocumentId: string;
   id: string;
   title: string;
   price: number;
+  productImage: string | null;
   colors: string[] | null;
   sizes: string[] | null;
 };
@@ -14,7 +16,14 @@ export type CheckoutQuote = {
   subtotal: number;
   deliveryFee: number;
   total: number;
-  items: Array<CheckoutPayload["cart"][number] & { name: string; unitPrice: number }>;
+  items: Array<
+    CheckoutPayload["cart"][number] & {
+      productDocumentId: string;
+      name: string;
+      productImage: string | null;
+      unitPrice: number;
+    }
+  >;
 };
 
 export class CheckoutPricingError extends Error {}
@@ -45,7 +54,13 @@ export async function createCheckoutQuote(cart: CheckoutPayload["cart"]): Promis
       throw new CheckoutPricingError(`${product.title} is not available in the selected colour.`);
     }
 
-    return { ...item, name: product.title, unitPrice: product.price };
+    return {
+      ...item,
+      productDocumentId: product.productDocumentId,
+      name: product.title,
+      productImage: product.productImage,
+      unitPrice: product.price,
+    };
   });
 
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
