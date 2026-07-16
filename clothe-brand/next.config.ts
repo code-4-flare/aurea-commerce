@@ -8,15 +8,13 @@ if (!sanityProjectId) {
 }
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  allowedDevOrigins: ["192.168.1.2"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.unsplash.com", // Replace with your external image domain
+        hostname: "images.unsplash.com",
         port: "",
-        pathname: "/**", // Matches all paths on that domain
+        pathname: "/**",
       },
       {
         protocol: "https",

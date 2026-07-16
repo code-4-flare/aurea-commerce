@@ -5,6 +5,7 @@ import ProductPageClient from "@/components/product-page-client";
 import { client, sanityFetch } from "@/src/sanity/lib/client";
 import { ALL_PRODUCT_SLUGS_QUERY, PRODUCT_BY_SLUG_QUERY } from "@/src/sanity/lib/queries";
 import { mapSanityProduct, mapSanityProducts } from "@/src/sanity/lib/products";
+import { createPageMetadata } from "@/lib/metadata";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -19,19 +20,23 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const { slug } = await params;
   const productDocument = await sanityFetch({ query: PRODUCT_BY_SLUG_QUERY, params: { slug }, tags: [`product:${slug}`, "product"] });
 
-  if (!productDocument) return { title: "Product Not Found | Aurea Nairobi" };
+  if (!productDocument) {
+    return createPageMetadata({
+      title: "Product Not Found | Aurea Nairobi",
+      description: "This Aurea Nairobi product is no longer available. Explore the current collection instead.",
+      path: `/product/${slug}`,
+      noIndex: true,
+    });
+  }
 
   const product = mapSanityProduct(productDocument);
 
-  return {
+  return createPageMetadata({
     title: `${product.name} | Aurea Nairobi`,
-    description: product.description,
-    openGraph: {
-      title: product.name,
-      description: product.description,
-      images: product.images.slice(0, 1),
-    },
-  };
+    description: product.description || `Shop ${product.name} from Aurea Nairobi, available for delivery across Kenya.`,
+    path: `/product/${slug}`,
+    image: product.images[0],
+  });
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

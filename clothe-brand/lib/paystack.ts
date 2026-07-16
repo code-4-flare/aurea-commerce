@@ -1,3 +1,5 @@
+import "server-only";
+
 import { z } from "zod";
 
 const paystackInitializeSchema = z.object({
@@ -29,9 +31,6 @@ const paystackVerificationSchema = z.object({
 });
 
 const paystackErrorSchema = z.object({ message: z.string().optional() }).loose();
-
-export type PaystackVerification = z.infer<typeof paystackVerificationSchema>["data"];
-export type PaymentResolution = "success" | "processing" | "failed";
 
 export class PaystackError extends Error {
   readonly payload?: unknown;
@@ -92,11 +91,6 @@ export async function initializePaystackTransaction(input: {
   return parsed.data.data;
 }
 
-export async function verifyPaystackTransaction(reference: string): Promise<PaystackVerification> {
-  const result = await verifyPaystackTransactionWithPayload(reference);
-  return result.transaction;
-}
-
 export async function verifyPaystackTransactionWithPayload(reference: string) {
   const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
     headers: { Authorization: `Bearer ${secretKey()}` },
@@ -114,14 +108,4 @@ export async function verifyPaystackTransactionWithPayload(reference: string) {
   }
 
   return { transaction: parsed.data.data, rawPayload: body };
-}
-
-export function resolvePaymentStatus(transaction: PaystackVerification): PaymentResolution {
-  if (["ongoing", "pending", "processing", "queued"].includes(transaction.status)) return "processing";
-  if (transaction.status === "success") {
-    const metadata = transaction.metadata;
-    const belongsToAurea = typeof metadata === "object" && metadata !== null && "source" in metadata && metadata.source === "aurea-commerce";
-    return transaction.currency === "KES" && belongsToAurea ? "success" : "failed";
-  }
-  return "failed";
 }

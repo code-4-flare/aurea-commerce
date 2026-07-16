@@ -147,17 +147,6 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
-      name: "newsletterEyebrow",
-      title: "Newsletter Eyebrow",
-      type: "string",
-    }),
-    defineField({
-      name: "newsletterTitle",
-      title: "Newsletter Title",
-      type: "text",
-      rows: 2,
-    }),
-    defineField({
       name: "footerColumns",
       title: "Footer Columns",
       type: "array",

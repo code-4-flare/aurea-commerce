@@ -73,6 +73,14 @@ export const ALL_PRODUCT_SLUGS_QUERY = defineQuery(/* groq */ `
   }
 `);
 
+export const PRODUCT_SITEMAP_QUERY = defineQuery(/* groq */ `
+  *[_type == "product" && (!defined(status) || status == "active") && defined(slug.current)]
+    | order(_updatedAt desc) {
+      "slug": slug.current,
+      "updatedAt": _updatedAt
+    }
+`);
+
 export const PRODUCT_BY_SLUG_QUERY = defineQuery(/* groq */ `
   *[_type == "product" && (!defined(status) || status == "active") && slug.current == $slug][0] {
     ${productFields},
@@ -239,8 +247,6 @@ export const SITE_SETTINGS_QUERY = defineQuery(/* groq */ `
           hotspot
         }
       },
-    newsletterEyebrow,
-    newsletterTitle,
     footerColumns[] {
       _key,
       title,

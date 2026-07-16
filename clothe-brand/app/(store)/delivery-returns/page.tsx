@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Delivery & Returns | Aurea Nairobi",
-  description: "Mock delivery and returns information for Aurea Nairobi.",
-};
+  description: "Review Aurea Nairobi delivery timelines, nationwide courier guidance, and return conditions before placing your order.",
+  path: "/delivery-returns",
+});
 
 export default function DeliveryReturnsPage() {
   return (
@@ -13,8 +15,8 @@ export default function DeliveryReturnsPage() {
       <div className="mt-10 grid gap-6">
         {[
           ["Nairobi delivery", "Same-day courier is available for Nairobi and surrounding areas on orders placed before 2 PM."],
-          ["Nationwide delivery", "Rest of Kenya orders are dispatched through mock courier partners within 1-2 working days."],
-          ["Returns", "Items can be returned within 14 days in original unworn condition for a mock refund or size exchange."],
+          ["Nationwide delivery", "Orders outside Nairobi are dispatched through our courier partners within 1-2 working days."],
+          ["Returns", "Items can be returned within 14 days in original unworn condition for an eligible refund or size exchange."],
         ].map(([title, body]) => (
           <section key={title} className="rounded-2xl border border-brand-dark/5 bg-white p-6">
             <h2 className="font-serif text-2xl text-brand-dark">{title}</h2>

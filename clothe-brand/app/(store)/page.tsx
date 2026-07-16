@@ -5,15 +5,18 @@ import Link from "next/link";
 
 import Hero from "@/components/hero";
 import ProductGrid from "@/components/product-grid";
+import SmartLink from "@/components/smart-link";
 import { sanityFetch } from "@/src/sanity/lib/client";
 import { ALL_ACTIVE_PRODUCTS_QUERY, HOMEPAGE_QUERY, SITE_SETTINGS_QUERY } from "@/src/sanity/lib/queries";
 import { mapSanityCollection, mapSanityProducts, type SanityCollectionCard, type SanityProduct } from "@/src/sanity/lib/products";
 import { mapHomepage, mapSiteSettings } from "@/src/sanity/lib/site";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Aurea Nairobi | Premium Fashion Ecommerce",
-  description: "Editorial fashion essentials in linen, satin, cotton, and tailored separates.",
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Aurea Nairobi | Refined Fashion for Everyday Living",
+  description: "Discover refined dresses, separates, and new arrivals curated by Aurea Nairobi, with secure checkout and delivery across Kenya.",
+  path: "/",
+});
 
 type HomepageDocument = {
   heroEyebrow?: string;
@@ -62,9 +65,9 @@ export default async function HomePage() {
             <span className="block text-[10px] font-bold uppercase tracking-[0.25em] text-brand-gold">{homepage.featuredProductsEyebrow}</span>
             <h2 className="font-serif text-3xl font-normal tracking-tight text-brand-dark lg:text-4xl">{homepage.featuredProductsTitle}</h2>
           </div>
-          <Link href={homepage.featuredProductsLinkHref} className="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-brand-dark transition-colors hover:text-brand-gold">
+          <SmartLink href={homepage.featuredProductsLinkHref} className="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-brand-dark transition-colors hover:text-brand-gold">
             {homepage.featuredProductsLinkLabel} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-          </Link>
+          </SmartLink>
         </div>
         <ProductGrid products={displayedProducts} />
       </section>

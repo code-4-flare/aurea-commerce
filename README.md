@@ -115,6 +115,14 @@ npx sanity login
 npm run schema:deploy
 ```
 
+For production database migrations and a full hosted Studio deployment, follow
+[`docs/deployment.md`](./docs/deployment.md). The root-level Studio deployment
+command is:
+
+```bash
+npm run deploy:studio
+```
+
 ## Seed Sample Content
 
 Create a Sanity token with write access, then run:
@@ -174,7 +182,7 @@ Editors can update the following in Sanity:
 - Header brand label and navigation
 - Mobile menu links and contact content
 - Trust strip items
-- Footer manifesto, feature cards, gallery, newsletter copy, link columns, studio contact, and legal links
+- Footer manifesto, feature cards, gallery, social links, link columns, studio contact, and legal links
 - Delivery and returns policy
 
 ## Validation

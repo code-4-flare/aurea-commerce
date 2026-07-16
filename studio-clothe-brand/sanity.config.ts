@@ -4,7 +4,7 @@ import { structureTool } from "sanity/structure";
 
 import { schemaTypes } from "../clothe-brand/src/sanity/schemaTypes";
 
-const projectId = process.env.SANITY_PROJECT_ID;
+const projectId = process.env.SANITY_STUDIO_PROJECT_ID || process.env.SANITY_PROJECT_ID;
 const dataset = process.env.SANITY_STUDIO_DATASET || "production";
 
 if (!projectId) {

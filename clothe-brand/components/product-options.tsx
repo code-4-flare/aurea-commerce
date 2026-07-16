@@ -79,14 +79,6 @@ export default function ProductOptions({ product }: { product: Product }) {
               <ShoppingBag data-icon="inline-start" /> {product.inStock ? "Add to Cart" : "Out of Stock"}
             </Button>
           </div>
-          <a
-            href={`https://wa.me/254700000000?text=Hello%20Aurea%20Nairobi,%20I%20would%20like%20to%20order%20the%20${encodeURIComponent(product.name)}%20in%20size%20${selectedSize}%20(${selectedColor.name})`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2.5 rounded-full border border-brand-gold/30 bg-white/20 py-3.5 text-xs font-semibold uppercase tracking-widest text-brand-dark shadow-sm transition-all duration-300 hover:border-brand-gold hover:bg-white/50"
-          >
-            Need help? Order via WhatsApp
-          </a>
         </div>
 
         <div className="rounded-2xl border border-brand-gold/15 bg-brand-cream p-5 text-xs font-light leading-relaxed text-stone-600">

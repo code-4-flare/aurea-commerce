@@ -1,8 +1,8 @@
 "use client";
 
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, MessageCircle, ShieldCheck, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import OrderSummary from "@/components/order-summary";
@@ -52,8 +52,10 @@ const fieldPaths: Record<keyof CheckoutForm, string> = {
 export default function CheckoutClient() {
   const cartItems = useCommerceStore(state => state.cartItems);
   const [isPaying, setIsPaying] = useState(false);
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const whatsappRequestInFlight = useRef(false);
   const total = useMemo(() => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
     return subtotal + (subtotal === 0 || subtotal >= 15_000 ? 0 : 500);
@@ -68,43 +70,51 @@ export default function CheckoutClient() {
     });
   };
 
-  const handlePay = async (event: FormEvent) => {
-    event.preventDefault();
+  const createPayload = () => ({
+    customer: {
+      fullName: form.fullName,
+      email: form.email,
+      phone: form.phone,
+    },
+    delivery: {
+      county: form.county,
+      town: form.townArea,
+      address: form.streetLandmark,
+      notes: form.deliveryNotes,
+    },
+    cart: cartItems.map(item => ({
+      productId: item.product.id,
+      size: item.selectedSize,
+      color: item.selectedColor.name,
+      quantity: item.quantity,
+    })),
+  });
 
-    const payload = {
-      customer: {
-        fullName: form.fullName,
-        email: form.email,
-        phone: form.phone,
-      },
-      delivery: {
-        county: form.county,
-        town: form.townArea,
-        address: form.streetLandmark,
-        notes: form.deliveryNotes,
-      },
-      cart: cartItems.map(item => ({
-        productId: item.product.id,
-        size: item.selectedSize,
-        color: item.selectedColor.name,
-        quantity: item.quantity,
-      })),
-    };
+  const validatePayload = () => {
+    const payload = createPayload();
     const validation = checkoutSchema.safeParse(payload);
 
     if (!validation.success) {
       setFieldErrors(zodFieldErrors(validation.error));
       toast.error("Check the highlighted checkout details.");
-      return;
+      return null;
     }
 
     setFieldErrors({});
+    return validation.data;
+  };
+
+  const handlePay = async (event: FormEvent) => {
+    event.preventDefault();
+    const payload = validatePayload();
+    if (!payload) return;
+
     setIsPaying(true);
     try {
       const response = await fetch("/api/checkout/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validation.data),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json()) as CheckoutErrorResponse & { authorizationUrl?: string };
 
@@ -121,6 +131,57 @@ export default function CheckoutClient() {
       setIsPaying(false);
     }
   };
+
+  const handleWhatsApp = async () => {
+    if (whatsappRequestInFlight.current) return;
+    const payload = validatePayload();
+    if (!payload) return;
+
+    whatsappRequestInFlight.current = true;
+    const popup = window.open("about:blank", "_blank");
+    if (popup) popup.opener = null;
+    setIsOpeningWhatsApp(true);
+
+    try {
+      const response = await fetch("/api/checkout/whatsapp-inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await response.json()) as CheckoutErrorResponse & { whatsappUrl?: string };
+
+      if (!response.ok || !data.whatsappUrl) {
+        if (data.fieldErrors) setFieldErrors(data.fieldErrors);
+        throw new Error(data.message || "Unable to prepare WhatsApp.");
+      }
+
+      if (popup) popup.location.assign(data.whatsappUrl);
+      else window.location.assign(data.whatsappUrl);
+    } catch (error) {
+      popup?.close();
+      toast.error(error instanceof Error ? error.message : "Unable to prepare your WhatsApp order.");
+    } finally {
+      whatsappRequestInFlight.current = false;
+      setIsOpeningWhatsApp(false);
+    }
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
+        <div className="mb-6 rounded-full border border-brand-gold/15 bg-white p-6">
+          <ShoppingBag className="h-10 w-10 stroke-[1.5] text-brand-gold" aria-hidden="true" />
+        </div>
+        <h1 className="font-serif text-4xl font-normal tracking-tight text-brand-dark">Your checkout is empty.</h1>
+        <p className="mt-4 max-w-lg text-sm font-light leading-relaxed text-stone-600">
+          Add a piece to your cart before starting secure checkout or preparing a WhatsApp order.
+        </p>
+        <Link href="/shop" className="mt-8 inline-flex items-center justify-center rounded-full bg-brand-dark px-8 py-4 text-xs font-semibold uppercase tracking-widest text-brand-cream shadow-md transition-all hover:bg-brand-gold hover:text-brand-dark">
+          Browse the collection
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 lg:px-12">
@@ -261,6 +322,13 @@ export default function CheckoutClient() {
               <>
                 <Lock data-icon="inline-start" aria-hidden="true" /> Pay securely ({formatKES(total)})
               </>
+            )}
+          </Button>
+          <Button type="button" variant="outline" onClick={handleWhatsApp} disabled={isPaying || isOpeningWhatsApp} className="w-full active:scale-[0.98]">
+            {isOpeningWhatsApp ? (
+              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Preparing WhatsApp...</>
+            ) : (
+              <><MessageCircle data-icon="inline-start" aria-hidden="true" /> Continue via WhatsApp</>
             )}
           </Button>
         </form>

@@ -1,12 +1,20 @@
 import { resolvePaymentReference } from "@/lib/checkout-schema";
 import { verifyAndReconcilePayment } from "@/src/lib/payments/server";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 type PaymentCallbackProps = {
   searchParams: Promise<{ reference?: string | string[]; trxref?: string | string[] }>;
 };
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = createPageMetadata({
+  title: "Confirming Payment | Aurea Nairobi",
+  description: "Aurea Nairobi is securely confirming your Paystack transaction.",
+  path: "/payments/callback",
+  noIndex: true,
+});
 
 function resultUrl(path: "success" | "processing" | "failed", reference?: string, reason?: string) {
   const params = new URLSearchParams();

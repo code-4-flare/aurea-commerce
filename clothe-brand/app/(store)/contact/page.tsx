@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Contact | Aurea Nairobi",
-  description: "Contact the Aurea Nairobi mock fashion studio.",
-};
+  description: "Contact Aurea Nairobi customer care for product, sizing, delivery, return, or order assistance.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

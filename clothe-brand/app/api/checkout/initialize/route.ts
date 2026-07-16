@@ -14,7 +14,7 @@ import { NextResponse } from "next/server";
 function callbackUrl(request: Request) {
   const configuredSiteUrl = process.env.SITE_URL;
   const baseUrl = configuredSiteUrl ? new URL(configuredSiteUrl) : new URL(request.url);
-  return new URL("/payment/callback", baseUrl.origin).toString();
+  return new URL("/payments/callback", baseUrl.origin).toString();
 }
 
 export async function POST(request: Request) {

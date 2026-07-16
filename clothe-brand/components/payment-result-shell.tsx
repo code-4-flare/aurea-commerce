@@ -1,4 +1,4 @@
-import Link from "next/link";
+import SmartLink from "@/components/smart-link";
 
 type ResultTone = "success" | "processing" | "failed";
 
@@ -59,19 +59,19 @@ export default function PaymentResultShell({
           <p className="mt-7 max-w-xl text-sm font-light leading-7 text-stone-600 md:text-base">{description}</p>
           {children}
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Link
+            <SmartLink
               href={primaryAction.href}
               className="inline-flex items-center justify-center rounded-full bg-brand-dark px-8 py-4 text-xs font-semibold uppercase tracking-widest text-brand-cream transition-all hover:bg-brand-gold hover:text-brand-dark active:scale-[0.98]"
             >
               {primaryAction.label}
-            </Link>
+            </SmartLink>
             {secondaryAction && (
-              <Link
+              <SmartLink
                 href={secondaryAction.href}
                 className="inline-flex items-center justify-center rounded-full border border-brand-dark/20 px-8 py-4 text-xs font-semibold uppercase tracking-widest text-brand-dark transition-all hover:border-brand-dark hover:bg-white active:scale-[0.98]"
               >
                 {secondaryAction.label}
-              </Link>
+              </SmartLink>
             )}
           </div>
         </section>

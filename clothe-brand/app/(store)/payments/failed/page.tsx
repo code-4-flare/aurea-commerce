@@ -1,8 +1,14 @@
 import PaymentResultShell from "@/components/payment-result-shell";
 import { paymentReferenceSchema } from "@/lib/checkout-schema";
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: "Payment Not Verified | Aurea Nairobi" };
+export const metadata: Metadata = createPageMetadata({
+  title: "Payment Not Verified | Aurea Nairobi",
+  description: "Your Aurea Nairobi payment could not be confirmed. Keep your reference before trying again.",
+  path: "/payments/failed",
+  noIndex: true,
+});
 
 const failureCopy = {
   missing_reference: {

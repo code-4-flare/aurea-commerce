@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Terms of Service | Aurea Nairobi",
-  description: "Default terms of service for the Aurea Nairobi fashion store.",
-};
+  description: "Read the terms governing orders, payments, delivery, returns, intellectual property, and use of the Aurea Nairobi online store.",
+  path: "/terms-of-service",
+});
 
 const sections = [
   {
@@ -60,7 +62,7 @@ export default function TermsOfServicePage() {
       <h1 className="mt-3 font-serif text-5xl font-normal tracking-tight text-brand-dark">Terms of Service</h1>
       <p className="mt-4 text-xs font-light uppercase tracking-wider text-stone-500">Last updated: July 12, 2026</p>
       <p className="mt-8 max-w-3xl text-sm font-light leading-relaxed text-stone-600">
-        These default terms describe the basic rules for using the Aurea Nairobi online store. They are a general template and should be reviewed for your actual business practices before launch.
+        These terms describe the rules for using the Aurea Nairobi online store and placing an order with us.
       </p>
 
       <div className="mt-10 divide-y divide-brand-dark/10 rounded-2xl border border-brand-dark/5 bg-white">

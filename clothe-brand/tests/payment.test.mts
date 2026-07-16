@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
 
-import { checkoutSchema, resolvePaymentReference } from "../lib/checkout-schema.ts";
+import { checkoutSchema, resolvePaymentReference, whatsappInquirySchema } from "../lib/checkout-schema.ts";
+import { buildWhatsAppUrl, createWhatsAppOrderMessage, isPrivateStorePath, withUtmParameters } from "../lib/links.ts";
 import { generateOrderNumber, paystackAmountFor, paymentMatchesOrder } from "../lib/order-utils.ts";
-import { resolvePaymentStatus } from "../lib/paystack.ts";
 import { hasValidPaystackSignature, paystackWebhookSchema } from "../lib/paystack-webhook.ts";
 
 const validCheckout = {
@@ -65,25 +65,6 @@ test("callback reference accepts reference or trxref and rejects mismatches", ()
   assert.equal(resolvePaymentReference({ reference: "invalid/reference" }), null);
 });
 
-test("Paystack statuses resolve to final and processing states", () => {
-  const transaction = {
-    id: 42,
-    reference: "trx-123",
-    amount: 12_500,
-    currency: "KES",
-    channel: "card",
-    metadata: { source: "aurea-commerce" },
-  } as const;
-
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success" }), "success");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "pending" }), "processing");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "ongoing" }), "processing");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "failed" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "abandoned" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success", currency: "NGN" }), "failed");
-  assert.equal(resolvePaymentStatus({ ...transaction, status: "success", metadata: {} }), "failed");
-});
-
 test("Paystack webhook signature and event shape are validated", () => {
   const secret = "sk_test_webhook_secret";
   const rawBody = JSON.stringify({
@@ -112,4 +93,43 @@ test("successful payment must match the stored order amount and currency", () =>
   assert.equal(paymentMatchesOrder({ status: "success", currency: "KES", amount: 1_349_900 }, order), false);
   assert.equal(paymentMatchesOrder({ status: "success", currency: "NGN", amount: 1_350_000 }, order), false);
   assert.equal(paymentMatchesOrder({ status: "failed", currency: "KES", amount: 1_350_000 }, order), false);
+});
+
+test("WhatsApp inquiries accept cart-only or complete checkout details", () => {
+  assert.equal(whatsappInquirySchema.safeParse({ cart: validCheckout.cart }).success, true);
+  assert.equal(whatsappInquirySchema.safeParse(validCheckout).success, true);
+  assert.equal(
+    whatsappInquirySchema.safeParse({ cart: validCheckout.cart, customer: validCheckout.customer }).success,
+    false,
+  );
+  assert.equal(whatsappInquirySchema.safeParse({ cart: [] }).success, false);
+});
+
+test("UTM helpers preserve links and exclude Studio from public navigation", () => {
+  assert.equal(
+    withUtmParameters("/shop?collection=linen#pieces", {
+      utmSource: "instagram",
+      utmMedium: "social",
+      utmCampaign: "new_arrivals",
+    }),
+    "/shop?collection=linen&utm_source=instagram&utm_medium=social&utm_campaign=new_arrivals#pieces",
+  );
+  assert.equal(isPrivateStorePath("/studio"), true);
+  assert.equal(isPrivateStorePath("https://shop.example/studio/products"), true);
+  assert.equal(isPrivateStorePath("/shop"), false);
+});
+
+test("WhatsApp helpers validate the destination and encode order context", () => {
+  const message = createWhatsAppOrderMessage({
+    orderNumber: "AUR-20260716-A9F2",
+    total: 13_500,
+    items: [{ name: "Rib Polo", size: "M", color: "Espresso", quantity: 2 }],
+    trackedStoreUrl: "https://aurea.example/shop?utm_source=whatsapp",
+  });
+  const url = buildWhatsAppUrl("https://wa.me/254700000000", message);
+
+  assert.match(message, /AUR-20260716-A9F2/);
+  assert.match(message, /Rib Polo/);
+  assert.equal(new URL(url).searchParams.get("text"), message);
+  assert.throws(() => buildWhatsAppUrl("https://example.com/contact", message));
 });

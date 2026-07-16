@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import SmartLink from "@/components/smart-link";
 import { SiteSettingsContent } from "@/src/sanity/lib/site";
 import { useCommerceStore } from "@/store/use-commerce-store";
 
@@ -27,10 +28,10 @@ export default function SiteHeader({ currentPath, settings }: { currentPath: str
             {settings.navigation.map(item => {
               const active = currentPath === item.href;
               return (
-                <Link key={item.href} href={item.href} className={`relative py-2 transition-colors hover:text-brand-gold ${active ? "text-brand-gold font-semibold" : "text-brand-dark"}`}>
+                <SmartLink key={item.href} href={item.href} className={`relative py-2 transition-colors hover:text-brand-gold ${active ? "text-brand-gold font-semibold" : "text-brand-dark"}`}>
                   {item.label}
                   {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-gold" />}
-                </Link>
+                </SmartLink>
               );
             })}
           </nav>
@@ -69,9 +70,9 @@ export default function SiteHeader({ currentPath, settings }: { currentPath: str
             </div>
             <div className="flex flex-col gap-6 text-sm font-medium uppercase tracking-[0.2em]">
               {settings.mobileNavigation.map(item => (
-                <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className="text-left transition-colors hover:text-brand-gold">
+                <SmartLink key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className="text-left transition-colors hover:text-brand-gold">
                   {item.label}
-                </Link>
+                </SmartLink>
               ))}
             </div>
             <div className="mt-auto border-t border-brand-dark/10 pt-6">

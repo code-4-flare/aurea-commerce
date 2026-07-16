@@ -1,3 +1,5 @@
+import { isPrivateStorePath } from "@/lib/links";
+
 export type LinkItem = {
   label: string;
   href: string;
@@ -42,8 +44,6 @@ export type SiteSettingsContent = {
   footerManifestoText: string;
   footerFeatureCards: FooterFeatureCard[];
   footerGallery: FooterGalleryItem[];
-  newsletterEyebrow: string;
-  newsletterTitle: string;
   footerColumns: FooterColumn[];
   studioHeading: string;
   studioAddress: string;
@@ -107,8 +107,6 @@ type RawSiteSettings = {
   footerFeatureCards?: { title?: string; text?: string }[];
   footerGallery?: { caption?: string; href?: string; image?: SanityImageValue }[];
   lookbookGallery?: { title?: string; caption?: string; image?: SanityImageValue }[];
-  newsletterEyebrow?: string;
-  newsletterTitle?: string;
   footerColumns?: { title?: string; links?: RawLink[] }[];
   studioHeading?: string;
   studioAddress?: string;
@@ -187,8 +185,6 @@ export const defaultSiteSettings: SiteSettingsContent = {
     },
   ],
   footerGallery: [],
-  newsletterEyebrow: "The Aurea Chronicle",
-  newsletterTitle: "Subscribe to receive limited batch release alerts and private studio previews.",
   footerColumns: [
     {
       title: "Shop",
@@ -246,7 +242,9 @@ export const defaultHomepage: HomepageContent = {
 };
 
 function mapLinks(links: RawLink[] | undefined): LinkItem[] {
-  return (links ?? []).filter(link => link.label && link.href).map(link => ({ label: link.label!, href: link.href! }));
+  return (links ?? [])
+    .filter(link => link.label && link.href && !isPrivateStorePath(link.href))
+    .map(link => ({ label: link.label!, href: link.href! }));
 }
 
 function mapFooterGallery(settings: RawSiteSettings): FooterGalleryItem[] {
@@ -257,7 +255,7 @@ function mapFooterGallery(settings: RawSiteSettings): FooterGalleryItem[] {
         href: item.href || "/shop",
         image: item.image?.asset?.url || "",
       }))
-      .filter(item => item.image) ?? [];
+      .filter(item => item.image && !isPrivateStorePath(item.href)) ?? [];
 
   if (footerGallery.length > 0) return footerGallery;
 
@@ -301,8 +299,6 @@ export function mapSiteSettings(settings: RawSiteSettings | null | undefined): S
       settings.footerFeatureCards?.map(card => ({ title: card.title || "", text: card.text || "" })).filter(card => card.title) ??
       defaultSiteSettings.footerFeatureCards,
     footerGallery: mapFooterGallery(settings),
-    newsletterEyebrow: settings.newsletterEyebrow || defaultSiteSettings.newsletterEyebrow,
-    newsletterTitle: settings.newsletterTitle || defaultSiteSettings.newsletterTitle,
     footerColumns:
       settings.footerColumns
         ?.map(column => ({ title: column.title || "", links: mapLinks(column.links) }))
@@ -313,8 +309,19 @@ export function mapSiteSettings(settings: RawSiteSettings | null | undefined): S
     studioPhone: settings.studioPhone || defaultSiteSettings.studioPhone,
     studioWhatsappUrl: settings.studioWhatsappUrl || defaultSiteSettings.studioWhatsappUrl,
     legalText: settings.legalText || defaultSiteSettings.legalText,
-    legalLinks: mapLinks(settings.legalLinks).length > 0 ? mapLinks(settings.legalLinks) : defaultSiteSettings.legalLinks,
+    legalLinks: normalizeLegalLinks(settings.legalLinks),
   };
+}
+
+function normalizeLegalLinks(links: RawLink[] | undefined) {
+  const mappedLinks = mapLinks(links).map(link => {
+    const label = link.label.toLowerCase();
+    if (label.includes("privacy")) return { ...link, href: "/privacy-policy" };
+    if (label.includes("terms")) return { ...link, href: "/terms-of-service" };
+    return link;
+  });
+
+  return mappedLinks.length > 0 ? mappedLinks : defaultSiteSettings.legalLinks;
 }
 
 export function mapHomepage(homepage: RawHomepage | null | undefined): HomepageContent {
