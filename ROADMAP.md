@@ -31,12 +31,12 @@
 - [x] Add server-side payment verification.
 - [x] Add branded success, processing, and failure checkout states.
 - [ ] Add a tasteful, reduced-motion-aware confetti celebration after a payment is successfully verified.
-- [ ] Add an order database before production fulfillment:
+- [x] Add Supabase order persistence before production fulfillment:
   - Create a pending order before Paystack initialization and generate its unique payment reference.
   - Store customer, delivery, expected KES amount, and immutable line-item snapshots.
-  - On callback or `charge.success`, atomically verify reference, currency, amount, and status before marking the order paid.
-  - Record processed webhook events and status transitions so retries cannot fulfill an order twice.
-  - Trigger fulfillment and customer notifications only after the paid transition succeeds.
+  - On callback or `charge.success`, verify reference, currency, amount, and status before marking the order paid.
+  - Record verification and webhook payloads in the payment event audit log.
+- [ ] Trigger fulfillment and customer notifications only after the paid transition succeeds.
 
 ## Phase 4: WhatsApp Integration With Kapso
 

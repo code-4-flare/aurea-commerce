@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import test from "node:test";
 
 import { checkoutSchema, resolvePaymentReference } from "../lib/checkout-schema.ts";
+import { generateOrderNumber, paystackAmountFor, paymentMatchesOrder } from "../lib/order-utils.ts";
 import { resolvePaymentStatus } from "../lib/paystack.ts";
 import { hasValidPaystackSignature, paystackWebhookSchema } from "../lib/paystack-webhook.ts";
 
@@ -95,4 +96,20 @@ test("Paystack webhook signature and event shape are validated", () => {
   assert.equal(hasValidPaystackSignature(rawBody, "invalid", secret), false);
   assert.equal(paystackWebhookSchema.safeParse(JSON.parse(rawBody)).success, true);
   assert.equal(paystackWebhookSchema.safeParse({ event: "charge.success", data: {} }).success, false);
+});
+
+test("order numbers and Paystack subunit amounts are deterministic", () => {
+  assert.equal(generateOrderNumber(new Date("2026-07-15T12:00:00Z"), "A9F2"), "AUR-20260715-A9F2");
+  assert.equal(paystackAmountFor(13_500), 1_350_000);
+  assert.throws(() => paystackAmountFor(10.5));
+  assert.throws(() => paystackAmountFor(Number.MAX_SAFE_INTEGER));
+});
+
+test("successful payment must match the stored order amount and currency", () => {
+  const order = { total: 13_500, currency: "KES" };
+
+  assert.equal(paymentMatchesOrder({ status: "success", currency: "KES", amount: 1_350_000 }, order), true);
+  assert.equal(paymentMatchesOrder({ status: "success", currency: "KES", amount: 1_349_900 }, order), false);
+  assert.equal(paymentMatchesOrder({ status: "success", currency: "NGN", amount: 1_350_000 }, order), false);
+  assert.equal(paymentMatchesOrder({ status: "failed", currency: "KES", amount: 1_350_000 }, order), false);
 });

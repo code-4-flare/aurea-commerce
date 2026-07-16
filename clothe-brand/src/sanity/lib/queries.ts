@@ -84,9 +84,11 @@ export const PRODUCT_BY_SLUG_QUERY = defineQuery(/* groq */ `
 
 export const CHECKOUT_PRODUCTS_QUERY = defineQuery(/* groq */ `
   *[_type == "product" && (!defined(status) || status == "active") && slug.current in $productIds] {
+    "productDocumentId": _id,
     "id": slug.current,
     title,
     price,
+    "productImage": images[0].image.asset->url,
     "colors": colors[]->name,
     "sizes": sizes[]->label
   }
